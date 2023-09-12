@@ -3,7 +3,7 @@
 #use "./../assign0.ml";;
 
 (* ****** ****** *)
-(*If It's not neg number or 2,3, It will recursively call is_divisible 2 to check if there's any factors *)
+
 let isPrime(n0: int): bool =
   if n0 <= 1 then 
     false
