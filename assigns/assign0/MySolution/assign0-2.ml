@@ -3,7 +3,7 @@
 #use "./../assign0.ml";;
 
 (* ****** ****** *)
-
+(*recusively looks for potential divisors up to n0/2, if exists then not a prime number*)
 let isPrime(n0: int): bool =
   if n0 <= 1 then 
     false
