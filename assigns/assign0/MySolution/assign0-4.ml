@@ -3,29 +3,33 @@
 #use "./../assign0.ml";;
 
 (* ****** ****** *)
+(*helper function to convert specific char to int*)
+let char2int(c: char): int =
+  (ord(c) - 48) 
 
-let rec expo(i: int): int =
-  if i > 1 then 
-    expo(i - 1) * 10
-  else 
+(*recursive helper function to compute power of 10 *)
+let rec power(i: int):int = 
+  if i = 0 then
     1
-
-
-let char2int(c: char, i: int): int =
-    if i = 0 then
-      (ord(c) - 48) 
-    else
-      (ord(c) - 48) * expo(i - 1)
-
-let rec helper(cs: string, i: int): int =
-    if i > 0 then
-      char2int(string_get cs (string_length cs - i )) + helper(cs, i-1)
-    else
-      0
-      
-  
+  else 
+    10 * power(i-1)
+(*process from right to left with a recursive helper function, 
+   generate value of the character at index i in the string and 
+   adding it to returning value *)
 let str2int(cs: string): int =
-      helper(cs, string_length(cs))
+    let lastindex = string_length cs - 1 in
+    let rec helper(i:int) : int =
+      if i < 0 then
+        0
+      else 
+        (char2int(string_get(cs, i)) * power(lastindex - i)) + helper(i-1)
+    in 
+    if cs = "" then
+      0
+    else 
+      helper lastindex
+
+
     
 (* ****** ****** *)
 
