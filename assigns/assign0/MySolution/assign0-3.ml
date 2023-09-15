@@ -22,6 +22,7 @@ let rec digit i n =
 let int2char(i: int): char =
     chr(i + 48) 
 
+(*calculated length of string once, use it to iteratively build a string by string_init *)
 let int2str (i0: int) : string = 
     let length = int_len i0 in
     string_init (length) (fun j -> int2char(digit i0 (length - j )))
