@@ -1,4 +1,4 @@
-
+#use "./../../classlib/OCaml/MyOcaml.ml";; 
 (*
 assign1-5: 20 points
 
