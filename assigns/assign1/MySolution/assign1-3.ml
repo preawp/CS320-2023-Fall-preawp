@@ -1,4 +1,4 @@
-#use "./../../classlib/OCaml/MyOcaml.ml";; 
+#use "./../../../classlib/OCaml/MyOCaml.ml";; 
 (*
 assign1-3: 10 points
 A 3-letter sequence abc is 132-like
@@ -22,3 +22,19 @@ avoid.
 
 fun string_avoid_132(cs: string): bool
 *)
+
+(*helper function to check if any 3 chars have 132-like pattern*)
+let is_132_like (a: char) (b: char) (c: char) =
+  a < c && c < b
+
+(*recursively use helper function that pick all possible 3 chars by indexes and check whether 132 pattern exists*)
+let string_avoid_132 (cs: string): bool =
+  let length = string_length cs in
+  let rec string_avoid_132_helper (i: int) (j: int) (k: int): bool =
+    if i >= length then true
+    else if j >= length then string_avoid_132_helper (i + 1) (i + 2) (i + 3)
+    else if k >= length then string_avoid_132_helper i (j + 1) (j + 2)
+    else if is_132_like (string_get_at cs i) (string_get_at cs j) (string_get_at cs k) then false
+    else string_avoid_132_helper i j (k + 1)
+  in
+  string_avoid_132_helper 0 1 2
