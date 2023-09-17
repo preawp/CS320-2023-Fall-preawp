@@ -1,4 +1,4 @@
-#use "./../../classlib/OCaml/MyOcaml.ml";; 
+#use "./../../../classlib/OCaml/MyOCaml.ml";; 
 
 (*
 assign1-2: 10 points
@@ -15,6 +15,17 @@ string_merge(cs1)(cs2) equals "1234abcde"
 *)
 
 (*recursive helper function to find smallest char*)
+
+let remove_char_once (cs: string) (char_to_remove: char): string =
+  let removed = ref false in
+  string_make_fwork (fun work ->
+    string_foreach cs (fun c ->
+      if c <> char_to_remove || !removed then
+        work c
+      else
+        removed := true
+    )
+  )
 let rec find_min_char (cs: string) (min_char: char): char =
   if cs = "" then min_char
   else 
