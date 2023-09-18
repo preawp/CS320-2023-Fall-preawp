@@ -24,40 +24,42 @@ string_longest_ascend returns "111111".
 *)
 
 
-(* Custom string_sub function *)
-let custom_string_sub (s: string) (start: int) (len: int) : string =
-  let s_len = string_length s in
-  if start >= 0 && start < s_len && len >= 0 && (start + len) <= s_len then
-    string_init len (fun i -> string_get_at s (start + i))
-  else
-    ""
-let string_longest_ascend s =
-  let n = String.length s in
+let string_longest_ascend (xs: string) : string =
+  let n = string_length xs in
   let lis_length = Array.make n 1 in
   let prev_index = Array.make n (-1) in
   
+  (* Traverse the string and compute the LIS *)
   for i = 1 to n - 1 do
     for j = 0 to i - 1 do
-      if s.[i] >= s.[j] && lis_length.(i) < lis_length.(j) + 1 then begin
+      if xs.[i] >= xs.[j] && lis_length.(i) < lis_length.(j) + 1 then begin
         lis_length.(i) <- lis_length.(j) + 1;
         prev_index.(i) <- j
       end
-    done;
+    done
   done;
   
-  let max_length = Array.fold_left max 0 lis_length in
-  let max_index = ref (-1) in
-  for i = 0 to n - 1 do
-    if lis_length.(i) = max_length then
-      max_index := i
+  (* Find the index of the maximum length in lis_length *)
+  let max_index = ref 0 in
+  let max_length = ref lis_length.(0) in
+  for i = 1 to n - 1 do
+    if lis_length.(i) > !max_length then begin
+      max_index := i;
+      max_length := lis_length.(i);
+    end
   done;
   
-  let longest_sequence = ref [] in
-  let index = ref !max_index in
-  while !index >= 0 do
-    longest_sequence := (String.make 1 s.[!index]) :: !longest_sequence;
-    index := prev_index.(!index);
-  done;
+  (* Backtrack to find the leftmost longest ascending subsequence *)
+  let rec backtrack index seq =
+    if index < 0 then seq
+    else
+      let new_seq = xs.[index] :: seq in
+      backtrack prev_index.(index) new_seq
+  in
   
-  String.concat "" (List.rev !longest_sequence)
-;;
+  let longest_sequence = backtrack !max_index [] in
+  
+  (* Convert the sequence to a string *)
+  let result = String.of_seq (List.to_seq longest_sequence) in
+  
+  result
