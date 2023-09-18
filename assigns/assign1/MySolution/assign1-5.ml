@@ -22,25 +22,42 @@ string_longest_ascend returns "123456"
 For instance, given "1234511111", the function
 string_longest_ascend returns "111111".
 *)
-let string_longest_ascend xs =
-  let rec find_longest xs current longest =
-    match xs with
-    | "" -> longest
-    | s ->
-      let rec find_ascend s acc =
-        match s with
-        | "" -> acc
-        | c :: rest ->
-          let current_num = int_of_char c in
-          match acc with
-          | [] -> find_ascend rest [current_num]
-          | hd :: _ when current_num <= hd -> acc
-          | hd :: tl -> find_ascend rest (current_num :: acc)
-      in
-      let ascending = find_ascend s [] in
-      if List.length ascending > List.length longest then
-        find_longest (String.sub s (List.length ascending) (String.length s - List.length ascending)) [] ascending
-      else
-        find_longest (String.sub s 1 (String.length s - 1)) [] longest
-  in
-  find_longest xs [] []
+
+
+(* Custom string_sub function *)
+let custom_string_sub (s: string) (start: int) (len: int) : string =
+  let s_len = string_length s in
+  if start >= 0 && start < s_len && len >= 0 && (start + len) <= s_len then
+    string_init len (fun i -> string_get_at s (start + i))
+  else
+    ""
+let string_longest_ascend s =
+  let n = String.length s in
+  let lis_length = Array.make n 1 in
+  let prev_index = Array.make n (-1) in
+  
+  for i = 1 to n - 1 do
+    for j = 0 to i - 1 do
+      if s.[i] >= s.[j] && lis_length.(i) < lis_length.(j) + 1 then begin
+        lis_length.(i) <- lis_length.(j) + 1;
+        prev_index.(i) <- j
+      end
+    done;
+  done;
+  
+  let max_length = Array.fold_left max 0 lis_length in
+  let max_index = ref (-1) in
+  for i = 0 to n - 1 do
+    if lis_length.(i) = max_length then
+      max_index := i
+  done;
+  
+  let longest_sequence = ref [] in
+  let index = ref !max_index in
+  while !index >= 0 do
+    longest_sequence := (String.make 1 s.[!index]) :: !longest_sequence;
+    index := prev_index.(!index);
+  done;
+  
+  String.concat "" (List.rev !longest_sequence)
+;;

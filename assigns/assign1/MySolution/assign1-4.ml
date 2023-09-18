@@ -1,4 +1,5 @@
-#use "./../../../classlib/OCaml/MyOCaml.ml";; 
+
+#use "./../../../classlib/OCaml/MyOCaml.ml";;
 
 (*
 assign1-4: 20 points
@@ -52,6 +53,7 @@ let string_concat_local (str1:string) (str2:string): string =
     let string_list = [str1; str2] in
     string_concat_list string_list
 
+(*main function that traverse both strings from end, one by one add digits and keep track of carry.*)
 let intrep_add (ds1: string) (ds2: string): string =
 
   let num1 = stringrev ds1 in
