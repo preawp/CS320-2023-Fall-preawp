@@ -11,21 +11,25 @@ let rec int_len(i: int): int =
     else
         int_len(i / 10) + 1 
     
-(*recursive helper function to extract individual digit*)
-let rec digit i n =
-    if i < 10 || n = 1 then
-        i mod 10
+(*int2str function converts int to a string*)
+let int2str(i0: int): string =
+  (*get_digit returns the individual digit at specified index of number*)
+  let rec get_digit(x: int): int =
+    if x = 0 then 1 else 10 * get_digit (x-1)
+  in
+
+  let length = int_len (abs i0) in
+  let is_neg = i0 < 0 in
+  string_init (length + (if is_neg then 1 else 0))
+  (fun i -> 
+    if i = 0 && is_neg then '-'
     else
-        digit (i/10) (n-1)
-
-(*helper function to convert single digit to char*)
-let int2char(i: int): char =
-    chr(i+48)
-
-(*calculated length of string once, use it to iteratively build a string by string_init *)
-let int2str (i0: int) : string = 
-    let length = int_len i0 in
-    string_init (length) (fun j -> int2char(digit i0 (length - j )))
+      (*dividing i0 to get different segments of the number and getting last digit*)
+      let index = length - (if is_neg then (i - 1) else i) - 1 in
+      let digit = abs (i0 / get_digit index) mod 10
+    in
+    chr(ord '0' + digit)
+    );;
 (* ****** ****** *)
 
 (* end of [CS320-2023-Fall-assign0-3.ml] *)
