@@ -11,25 +11,26 @@ let rec int_len(i: int): int =
     else
         int_len(i / 10) + 1 
     
-(*int2str function converts int to a string*)
+(*main function converts int to a string*)
 let int2str(i0: int): string =
-  (*get_digit returns the individual digit at specified index of number*)
+  (* Helper function to retrieve a specific digit at a given position *)
   let rec get_digit(x: int): int =
     if x = 0 then 1 else 10 * get_digit (x-1)
   in
 
   let length = int_len (abs i0) in
-  let is_neg = i0 < 0 in
-  string_init (length + (if is_neg then 1 else 0))
-  (fun i -> 
-    if i = 0 && is_neg then '-'
+  let is_negative = i0 < 0 in
+  string_init (length + (if is_negative then 1 else 0))
+  (fun index -> 
+    if index = 0 && is_negative then '-'
     else
-      (*dividing i0 to get different segments of the number and getting last digit*)
-      let index = length - (if is_neg then (i - 1) else i) - 1 in
-      let digit = abs (i0 / get_digit index) mod 10
+      let position = length - (if is_negative then (index - 1) else index) - 1 in
+      let digit = abs (i0 / get_digit position) mod 10
     in
+    (* Convert the digit to a character and add it to the result string *)
     chr(ord '0' + digit)
-    );;
+  )
+
 (* ****** ****** *)
 
 (* end of [CS320-2023-Fall-assign0-3.ml] *)
