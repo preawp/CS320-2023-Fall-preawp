@@ -20,7 +20,7 @@ let rec digit i n =
 
 (*helper function to convert single digit to char*)
 let int2char(i: int): char =
-    chr(i + 48) 
+    chr(i+48)
 
 (*calculated length of string once, use it to iteratively build a string by string_init *)
 let int2str (i0: int) : string = 
