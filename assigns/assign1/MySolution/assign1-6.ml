@@ -25,13 +25,14 @@ avoid.
 fun string_avoid_1324(cs: string): bool
 *)
 
-(*a function to check the 1324-like pattern*)
-let is_1324_like (a: char) (b: char) (c: char) (d: char) =
+(*recusive function to check the 1324-like pattern for each a b c d*)
+ let is_1324_like (a: char) (b: char) (c: char) (d: char) =
   a < c && c < b && b < d
 
-(*similar to string_avoid_132, we recursively check if it is 1324-like*)
+(*main function- similar to avoid-132, we use helper function to perform a recursion and return correct bool value*)
 let string_avoid_1324 (cs: string): bool =
   let length = string_length cs in
+  (*recursively check if it is 1324-like, using the nested loop for any possible four indices*)
   let rec string_avoid_1324_helper (i: int) (j: int) (k: int) (l: int): bool =
     if i >= length then true
     else if j >= length then string_avoid_1324_helper (i + 1) (i + 2) (i + 3) (i + 4)

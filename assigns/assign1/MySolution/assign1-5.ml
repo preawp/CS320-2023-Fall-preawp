@@ -23,7 +23,7 @@ For instance, given "1234511111", the function
 string_longest_ascend returns "111111".
 *)
 
-
+(*our main function to return longest ascending pattern found in string*)
 let string_longest_ascend (xs: string) : string =
   let n = string_length xs in
   let list_length = Array.make n 1 in
