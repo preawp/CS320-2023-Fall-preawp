@@ -17,7 +17,26 @@
 *)
 
 let sort5: int*int*int*int*int -> int*int*int*int*int =
-  (* YOUR CODE *)
+  fun (x1, x2, x3, x4, x5) ->
+    let compare(a, b) =
+      if a <= b then (a, b)
+      else (b, a)
+    in
 
+    let (x1, x2) = compare (x1,x2) in
+    let (x2, x3) = compare (x2,x3) in
+    let (x3, x4) = compare (x3,x4) in
+    let (x4, x5) = compare (x4,x5) in
+
+    let (x1, x2) = compare (x1,x2) in
+    let (x2, x3) = compare (x2,x3) in
+    let (x3, x4) = compare (x3,x4) in
+
+    let (x1, x2) = compare (x1,x2) in
+    let (x2, x3) = compare (x2,x3) in
+
+    let (x1, x2) = compare (x1,x2) in
+
+    (x1, x2, x3, x4, x5)
 
 (* ************************************************ *)
