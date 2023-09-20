@@ -30,6 +30,7 @@ let is_132_like (a: char) (b: char) (c: char) =
 (*recursively use helper function that pick all possible 3 chars by indexes and check whether 132 pattern exists*)
 let string_avoid_132 (cs: string): bool =
   let length = string_length cs in
+  if length < 3 then true
   let rec string_avoid_132_helper (i: int) (j: int) (k: int): bool =
     if i >= length then true
     else if j >= length then string_avoid_132_helper (i + 1) (i + 2) (i + 3)
