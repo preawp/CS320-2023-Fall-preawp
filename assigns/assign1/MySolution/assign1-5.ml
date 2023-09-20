@@ -26,26 +26,26 @@ string_longest_ascend returns "111111".
 
 let string_longest_ascend (xs: string) : string =
   let n = string_length xs in
-  let lis_length = Array.make n 1 in
+  let list_length = Array.make n 1 in
   let prev_index = Array.make n (-1) in
   
   (* Traverse the string and compute the LIS *)
   for i = 1 to n - 1 do
     for j = 0 to i - 1 do
-      if xs.[i] >= xs.[j] && lis_length.(i) < lis_length.(j) + 1 then begin
-        lis_length.(i) <- lis_length.(j) + 1;
+      if string_get_at xs i >= string_get_at xs j && list_length.(i) < list_length.(j) + 1 then begin
+        list_length.(i) <- list_length.(j) + 1;
         prev_index.(i) <- j
       end
     done
   done;
   
-  (* Find the index of the maximum length in lis_length *)
+  (* Find the index of the maximum length in list_length *)
   let max_index = ref 0 in
-  let max_length = ref lis_length.(0) in
+  let max_length = ref list_length.(0) in
   for i = 1 to n - 1 do
-    if lis_length.(i) > !max_length then begin
+    if list_length.(i) > !max_length then begin
       max_index := i;
-      max_length := lis_length.(i);
+      max_length := list_length.(i);
     end
   done;
   
