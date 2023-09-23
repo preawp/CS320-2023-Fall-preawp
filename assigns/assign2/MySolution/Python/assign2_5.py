@@ -12,10 +12,10 @@
 
 #transforms the work done by fwork into a list
 def fnlist_make_fwork(fwork):
-    res = [] 
-    
+    res = []
+
     def work(x0):
         res.append(x0)
-        
+
     fwork(work)
-    return res
+    return list(reversed(res))
