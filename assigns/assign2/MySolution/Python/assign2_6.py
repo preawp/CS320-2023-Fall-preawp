@@ -35,6 +35,8 @@
 # ;;
 #
 
+
+# This function merges two input strings, cs1 and cs2, into a single string
 def string_merge(cs1, cs2):
     n1 = len(cs1)
     n2 = len(cs2)
@@ -42,19 +44,18 @@ def string_merge(cs1, cs2):
     def foreach(i1, i2, work):
         if i1 < n1:
             if i2 < n2:
-                c1 = cs1[i1]
-                c2 = cs2[i2]
-                if c1 <= c2:
-                    work(c1)
+                if  cs1[i1] <=  cs2[i2]:
+                    work( cs1[i1])
                     foreach(i1 + 1, i2 + 0, work)
                 else:
-                    work(c2)
+                    work( cs2[i2])
                     foreach(i1 + 0, i2 + 1, work)
             else:
                 int1_foreach(n1 - i1, lambda i: work(cs1[i1 + i]))
         else:
             int1_foreach(n2 - i2, lambda i: work(cs2[i2 + i]))
-
+            
+            
     def string_make_fwork(fwork):
         result = []
 
@@ -66,12 +67,8 @@ def string_merge(cs1, cs2):
 
     return string_make_fwork(lambda work: foreach(0, 0, work))
 
-def int1_foreach(count, action):
-    for i in range(count):
-        action(i)
+def int1_foreach(c, work):
+    for i in range(c):
+        work(i)
 
-# Example usage:
-cs1 = "abcde"
-cs2 = "abz"
-result = string_merge(cs1, cs2)
-print(result)
+
