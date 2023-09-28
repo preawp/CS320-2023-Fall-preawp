@@ -118,9 +118,8 @@ def fnlist_print(xs):
 ####################################################
 def fnlist_reverse(xs):
     res = fnlist_nil()
-    iterator = fnlist_iter(xs)
-    for x in iterator:
-        res = fnlist_cons(x, res)
+    for x1 in xs:
+        res = fnlist_cons(x1, res)
     return res
 ####################################################
 
