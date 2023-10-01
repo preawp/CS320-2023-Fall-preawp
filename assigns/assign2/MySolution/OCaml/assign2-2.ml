@@ -39,19 +39,20 @@ let rec list_reverse_mylist (xs: 'a mylist): 'a mylist =
   
 (*computes the element of a given mylist at a given position, otherwise exception*)
 let rec mylist_get_at (xs: 'a mylist) (i0: int): 'a =
-  match xs with
-  | MyNil -> mylist_subscript_exn ()
-  | MyCons (x, _) when i0 = 0 -> x
-  | MyCons (_, rest) when i0 > 0 -> mylist_get_at rest (i0 - 1)
-  | MySnoc (init, x) ->
-    let len_init = mylist_length init in
-    if i0 = len_init then x
-    else if i0 < len_init && i0 >= 0 then mylist_get_at init i0
-    else mylist_subscript_exn ()
-  | MyReverse l -> mylist_get_at (list_reverse_mylist l) i0
-  | MyAppend2 (l1, l2) ->
-    let len_l1 = mylist_length l1 in
-    if i0 < len_l1 && i0 >= 0 then mylist_get_at l1 i0
-    else if i0 >= len_l1 && i0 < len_l1 + mylist_length l2 then mylist_get_at l2 (i0 - len_l1)
-    else mylist_subscript_exn ()
-  | _ -> mylist_subscript_exn ()
+  if i0 < 0 then mylist_subscript_exn ()
+  else :
+   match xs with
+    | MyNil -> mylist_subscript_exn ()
+    | MyCons (x, _) ->
+      if i0 = 0 then x 
+      else mylist_get_at rest (i0 - 1)
+    | MySnoc (init, x) ->
+      let len_init = mylist_length init in
+      if i0 = len_init then x
+      else i0 < len_init && i0 >= 0 then mylist_get_at init i0
+    | MyReverse l -> mylist_get_at (list_reverse_mylist l) i0
+    | MyAppend2 (l1, l2) ->
+      let len_l1 = mylist_length l1 in
+      if i0 < len_l1 && i0 >= 0 then mylist_get_at l1 i0
+      else mylist_get_at l2 (i0 - len_l1)
+   

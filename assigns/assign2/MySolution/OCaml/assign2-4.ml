@@ -15,6 +15,8 @@ string_sepjoin_list(",")(["1","22","333"]) = "1,22,333"
 For instance,
 string_sepjoin_list(";;")(["11","22","33"]) = "11;;22;;33"
 *)
+
+(*helper function to concat two strings*)
 let concat_strings str1 str2 =
   let len1 = string_length str1 in
   let len2 = string_length str2 in
@@ -25,6 +27,7 @@ let concat_strings str1 str2 =
   ) in
   result
 
+  (*main function to join list of strings with given symbols*)
 let string_sepjoin_list (sep: string) (xs: string list): string =
   let concat_with_sep acc x =
     if acc = "" then x else concat_strings (concat_strings acc sep) x
