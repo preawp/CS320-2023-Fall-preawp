@@ -1,24 +1,54 @@
- (* ****** ****** *)
+#use "./../../../../classlib/OCaml/MyOCaml.ml";; 
+#use "./../../assign3.ml";;
 (*
-//
 Assign3-4:
-HX-2023-09-28: 30 points
+HX-2023-09-26: 20 points
+Given a word x of length n, another word is a buddy
+of x if x and y differ exactly at one position. For
+instance, "live" is a buddy "love" (and "love" is also
+a buddy of "live").
 //
-Here is an implementation of the famous 8-queen puzzle:
-https://ats-lang.sourceforge.net/DOCUMENT/INT2PROGINATS/HTML/x631.html
+Please give a NON-RECURSIVE implementation of
+list_of_buddies that returns a list of all the buddies
+of a given word.
 //
-Please give a NON-RECURSIVE implementation that solves the 8-queen puzzle.
-//
-Hint: Please think of programming in terms of combinators.
-//
-//
-type board_t =
-int * int * int * int * int * int * int * int
-//
-fun
-queen8_puzzle_solve(): board_t list =
+let
+list_of_buddies(word: string): string list = ...
+
 (*
-returns a list of boards consisting of all the solutions to the puzzle.
+FYI. The concept of word buddies is used in the following game:
+https://xanadu-lang.github.io/xats2js/docgen/CodeBook/Doublet/2020-11-29/
+https://github.com/xanadu-lang/xats2js/tree/master/docgen/CodeBook/Doublet
 *)
 *)
+
 (* ****** ****** *)
+
+(*A string concatenation function*)
+let string_concat_local (str1:string) (str2:string): string = 
+  let string_list = [str1; str2] in
+  string_concat_list string_list
+
+  (* Custom string_sub_local function *)
+let rec string_sub_local (s: string) (start: int) (length: int) : string =
+  if length <= 0 || start < 0 || start >= string_length s then ""
+  else if start + length > string_length s then
+    string_cons (string_get_at s start) (string_sub_local s (start + 1) (length - 1))
+  else string_cons (string_get_at s start) (string_sub_local s (start + 1) (length - 1))
+
+
+(*non-recursive list_of_buddies function*) 
+let list_of_buddies(word: string): string list =
+  let n = string_length word in
+  let alphabet = "abcdefghijklmnopqrstuvwxyz" in
+  let buddies = ref [] in
+  for i = 0 to n - 1 do
+    for j = 0 to 25 do
+      if string_get_at alphabet j <> string_get_at word i then
+        let left = string_sub_local word 0 i in
+        let right = string_sub_local word (i + 1) (n - i - 1) in
+        let buddy = string_concat_local left (string_cons (string_get_at alphabet j) right) in
+        buddies := buddy :: !buddies;
+      done
+  done;
+  !buddies
