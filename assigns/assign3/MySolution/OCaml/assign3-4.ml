@@ -30,13 +30,19 @@ let string_concat_local (str1:string) (str2:string): string =
   string_concat_list string_list
 
   (* Custom string_sub_local function *)
-let rec string_sub_local (s: string) (start: int) (length: int) : string =
+let string_sub_local (s: string) (start: int) (length: int) : string =
   if length <= 0 || start < 0 || start >= string_length s then ""
-  else if start + length > string_length s then
-    string_cons (string_get_at s start) (string_sub_local s (start + 1) (length - 1))
-  else string_cons (string_get_at s start) (string_sub_local s (start + 1) (length - 1))
+  else
+    let substring = ref "" in
+    let end_pos =
+      if (start + length) > (string_length s) then (start + length) 
+      else string_length s in
+    for i = start to end_pos - 1 do
+      substring := string_append (!substring) (str(string_get_at s i));
+    done;
+    !substring
 
-
+  
 (*non-recursive list_of_buddies function*) 
 let list_of_buddies(word: string): string list =
   let n = string_length word in

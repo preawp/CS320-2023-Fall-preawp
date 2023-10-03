@@ -20,22 +20,32 @@ and [2;1] are DIFFERENT.
 //
 *)
 
-(*customized list_map*)
-let rec list_map f lst =
-  match lst with
-  | [] -> []
-  | x :: xs -> f x :: list_map f xs
+let lenlist (list: 'a list) : int =
+  list_foldleft list 0 (fun acc _ -> acc + 1) 
 
-(*non recursive version of list_nchoose*)
+(*list_map*)
+let list_map xs = foreach_to_map_list(list_foreach)(xs)
+
+(*non-recursive version of list_nchoose*)
 let list_nchoose (xs: 'a list)(n0: int): 'a list list =
-  let rec combine n xs =
-    if n = 0 then [[]]
-    else
-      match xs with
-      | [] -> []
-      | h :: t ->
-        let with_h = list_map (fun l -> h :: l) (combine (n - 1) t) in
-        let without_h = combine n t in
-        list_append with_h without_h
+  let combine n xs =
+    let stack = ref [(n0, xs, [])] in
+    let result = ref [] in
+    while !stack <> [] do
+      match !stack with
+      | [] -> ()
+      | (n', xs', current) :: rest ->
+        stack := rest;
+        if n' = 0 then
+          result := list_append [list_reverse current] !result
+        else
+          match xs' with
+          | [] -> ()
+          | h :: t ->
+            stack := (n' - 1, t, h :: current) :: (n', t, current) :: !stack
+    done;
+    !result
   in
-  combine n0 xs
+  if n0 <= 0 then [[]]
+  else if n0 > lenlist xs then []
+  else combine n0 xs
