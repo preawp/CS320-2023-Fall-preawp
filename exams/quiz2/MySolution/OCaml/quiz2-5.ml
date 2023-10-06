@@ -1,3 +1,4 @@
+
 (* ************************************************ *)
 
 (*
@@ -11,4 +12,14 @@ is empty, raise the Empty exception
 (* ************************************************ *)
 
 exception Empty
-let list_last(xs: 'a list): 'a = ....
+
+let list_last(xs: 'a list): 'a =
+  match xs with
+  | [] -> raise Empty
+  | h :: t ->
+      let result = ref None in
+      list_foldright t () (fun x () -> if !result = None then result := Some x
+    );
+     match !result with
+    | Some x -> x
+    | None -> raise Empty

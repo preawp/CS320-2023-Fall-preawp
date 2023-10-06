@@ -1,3 +1,7 @@
+
+(* ****** ****** *)
+
+(* end of [CS320-2023-Fall-classlib-MyOCaml.ml] *)
 (* ************************************************ *)
 
 (*
@@ -17,4 +21,11 @@ match xs with
 
 (* ************************************************ *)
 
-let list_append(xs: 'a list): 'a list = ....
+let rec helper (xs)(ys) =
+      match xs with
+      | [] -> ys
+      | x1 :: xs -> list_foldleft(ys)(xs)(fun x acc ->  x1 :: helper(xs)(ys))
+
+let list_append (xs)(ys) =
+      helper xs ys
+
