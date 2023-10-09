@@ -14,33 +14,23 @@ the enumeration should be of the following order
 let list_permute(xs: 'a list): 'a list stream
 *)
 
-(* ****** ****** *)
-
-let rec list_permute (xs: 'a list): 'a list stream =
-  let rec insert_all_positions x xs =
-    match xs with
-    | [] -> [[x]]
-    | hd :: tl ->
-      (x :: xs) :: (List.map (fun p -> hd :: p) (insert_all_positions x tl))
-  in
+let list_streamize xs =
+  let stream_of_list = int1_map_stream (List.length xs) (fun i -> List.nth xs i) in
+  fun () -> stream_of_l
+  
+let rec insert_everywhere (x : 'a) (xs : 'a list) : 'a list list =
   match xs with
-  | [] -> fun () -> StrNil
-  | x :: rest ->
-    let insertions = List.map (insert_all_positions x) (list_permute rest) in
-    let permutations = List.flatten insertions in
-    fun () -> StrCons (permutations, list_permute rest)
-;;
+  | [] -> [[x]]
+  | y :: ys as lst -> (x :: lst) :: List.map (fun zs -> y :: zs) (insert_everywhere x ys)
 
-let rec stream_to_list n s =
-  if n <= 0 then []
-  else match s() with
-       | StrNil -> []
-       | StrCons (x, xs) -> x :: stream_to_list (n - 1) xs
-;;
+let rec permutations (xs : 'a list) : 'a list list =
+  match xs with
+  | [] -> [[]]
+  | x :: xs' ->
+    let perms = permutations xs' in
+    List.flatten (List.map (insert_everywhere x) perms)
 
-let () =
-  let xs = [1; 2; 3] in
-  let permute_stream = list_permute xs in
-  let n = List.length xs * (List.length xs - 1) in
-  let permutations = stream_to_list n permute_stream in
-  List.iter (fun perm -> Printf.printf "[%s]\n" (String.concat "; " (List.map string_of_int perm))) permutations
+let stream_permute_list (xs : 'a list) : 'a list stream =
+  let all_perms = permutations xs in
+  let perm_stream = list_streamize all_perms in
+  fun () -> perm_stream

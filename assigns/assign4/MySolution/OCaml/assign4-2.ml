@@ -13,17 +13,12 @@ if i1+j1 < i2+j2.
 let theNatPairs: (int*int) stream = fn () => ...
 //
 *)
-
-let rec cantor_pairs i j =
-  fun () ->
-    let next =
-      if i = 0 then (0, j + 1) else (i - 1, j + 1)
-    in
-    StrCons((i, j), cantor_pairs (fst next) (snd next))
-
-let theNatPairs: (int * int) stream = cantor_pairs 0 0
-let rec take_n_pairs n s =
-  match (n, s()) with
-  | (0, _) | (_, StrNil) -> []
-  | (n, StrCons (pair, rest)) -> pair :: take_n_pairs (n - 1) rest
+let theNatPairs : (int * int) stream =
+  let rec helper (i, j) =
+    if j = 0 then
+      StrCons ((i, j), fun () -> helper (0, i + 1))
+    else
+      StrCons ((i, j), fun () -> helper (i + 1, j - 1))
+  in
+  fun () -> helper (0, 0)
 
