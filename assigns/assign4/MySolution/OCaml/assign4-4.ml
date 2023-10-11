@@ -14,23 +14,23 @@ the enumeration should be of the following order
 let list_permute(xs: 'a list): 'a list stream
 *)
 
-let list_streamize xs =
-  let stream_of_list = int1_map_stream (List.length xs) (fun i -> List.nth xs i) in
-  fun () -> stream_of_l
-  
-let rec insert_everywhere (x : 'a) (xs : 'a list) : 'a list list =
-  match xs with
-  | [] -> [[x]]
-  | y :: ys as lst -> (x :: lst) :: List.map (fun zs -> y :: zs) (insert_everywhere x ys)
 
-let rec permutations (xs : 'a list) : 'a list list =
+let rec list_to_stream (lst: 'a list): 'a stream =
+  match lst with
+  | [] -> fun () -> StrNil
+  | x::xs -> fun () -> StrCons(x, list_to_stream xs)
+
+let rec permutations (xs: 'a list): 'a list list =
   match xs with
   | [] -> [[]]
-  | x :: xs' ->
+  | x::xs' ->
     let perms = permutations xs' in
-    List.flatten (List.map (insert_everywhere x) perms)
+    let rec insert_everywhere (x: 'a) = function
+      | [] -> [[x]]
+      | y::ys -> (x :: y :: ys) :: List.map (fun p -> y :: p) (insert_everywhere x ys)
+    in
+    List.flatten (List.map (fun p -> insert_everywhere x p) perms)
 
-let stream_permute_list (xs : 'a list) : 'a list stream =
+let list_permute (xs: 'a list): 'a list stream =
   let all_perms = permutations xs in
-  let perm_stream = list_streamize all_perms in
-  fun () -> perm_stream
+  list_to_stream all_perms
