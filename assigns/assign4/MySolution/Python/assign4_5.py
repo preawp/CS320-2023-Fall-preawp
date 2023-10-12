@@ -43,43 +43,20 @@
 ################################################
 
 def string_fset_at(cs, i0, c0):
-    def tabulate(length, func):
-        return [func(i) for i in range(length)]
+    return "".join(c0 if i == i0 else cs[i] for i in range(len(cs)))
 
-    def get_at(cs, i):
-        return cs[i]
-
-    def set_at(cs, i, c):
-        cs = list(cs)
-        cs[i] = c
-        return ''.join(cs)
-
-    return tabulate(len(cs), lambda i: get_at(cs, i) if i != i0 else c0)
-
-# ****** ******
+alphabet = "".join(chr(ord('a') + i) for i in range(26))
 
 def list_of_buddies(word):
-    def foreach(iterable, func):
-        for item in iterable:
-            func(item)
+    n0 = len(word)
 
-    def length(cs):
-        return len(cs)
+    def make_work(work):
+        for i0 in range(n0):
+            c0 = word[i0]
+            for c1 in alphabet:
+                if c1 != c0:
+                    work(string_fset_at(word, i0, c1))
 
-    def get_at(cs, i):
-        return cs[i]
-
-    def make_fwork(func):
-        result = []
-        foreach(range(length(word)), lambda i0: result.append(
-            set_at(word, i0, c1) for c1 in alphabet if get_at(word, i0) != c1))
-        return result
-
-    alphabet = ''.join([chr(ord('a') + i) for i in range(26)])
-    return make_fwork(string_fset_at)
-
-# Test the code
-word = "word"
-buddies = list_of_buddies(word)
-for buddy in buddies:
-    print(buddy)
+    buddies = []
+    make_work(buddies.append)
+    return buddies
