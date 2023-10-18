@@ -1,4 +1,5 @@
 #use "./../../../../classlib/OCaml/MyOCaml.ml";; 
+
 (*
 //
 Assign4-4:
@@ -14,23 +15,30 @@ the enumeration should be of the following order
 let list_permute(xs: 'a list): 'a list stream
 *)
 
+(* ****** ****** *)
 
-let rec list_to_stream (lst: 'a list): 'a stream =
+let rec permutation lst = 
+  let rec stream_work s f1 f2 =
+    match s with
+    | StrNil -> f2()
+    | StrCons (h, ss)-> StrCons(f1 h, fun () -> stream_work (ss ()) f1 f2) in 
+
   match lst with
-  | [] -> fun () -> StrNil
-  | x::xs -> fun () -> StrCons(x, list_to_stream xs)
+  | [] -> fun () -> StrCons([], fun () -> StrNil)
+  | lst1 -> 
+  let rec helper lst1 lst2 =
+   match lst1 with
+    | [] -> StrNil
+    | h::lst1 -> 
+        let list_add x lst = 
+          x :: lst in
+        let element = list_append (list_reverse lst2) lst1 in 
+        stream_work (permutation element ()) (list_add h) (fun () -> helper lst1 (list_add h lst2)) 
 
-let rec permutations (xs: 'a list): 'a list list =
-  match xs with
-  | [] -> [[]]
-  | x::xs' ->
-    let perms = permutations xs' in
-    let rec insert_everywhere (x: 'a) = function
-      | [] -> [[x]]
-      | y::ys -> (x :: y :: ys) :: List.map (fun p -> y :: p) (insert_everywhere x ys)
-    in
-    List.flatten (List.map (fun p -> insert_everywhere x p) perms)
+in
+  fun() -> helper lst1 []
 
-let list_permute (xs: 'a list): 'a list stream =
-  let all_perms = permutations xs in
-  list_to_stream all_perms
+let list_permute(xs: 'a list): 'a list stream =
+  let result = permutation(xs)
+in result
+;;

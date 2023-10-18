@@ -19,10 +19,28 @@ And so on, and so forth
 let the_ln2_stream: float stream = fun() -> ...
 //
 *)
+
+
+type 'a strcon =
+  StrNil
+| StrCons of
+  'a * (unit -> 'a strcon)
+
+(* ****** ****** *)
+
+type 'a stream =
+unit -> 'a strcon (* thunk *)
+
 let the_ln2_stream : float stream =
-    let rec streamer currNum sum sign () =
-      let nextNum = sign /. currNum in
-      let summ = sum +. nextNum in
-      fun () -> StrCons (summ, streamer (currNum +. 1.0) summ (-.sign) ())
-    in
-    fun () -> StrCons (1.0, streamer 2.0 1.0 (-.1.0) ())
+  let rec helper i acc sign () = 
+    let nextNum = sign /. i in
+    let acc' = acc +. nextNum in
+    let sign' = (-1.0)*. sign in
+    fun x -> StrCons(acc', helper (i+.1.0) acc' sign'())
+  in
+   fun x -> StrCons( 1.0 , helper 2.0 1.0 (-1.0)())
+
+
+
+
+ 
