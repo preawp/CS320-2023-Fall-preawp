@@ -591,7 +591,7 @@ Grammar (<expr> is the start symbol)
     | ' ' :: xs -> Some (0, s)
     | d :: xs -> (
       match parse_digit d with
-      | Some(Int n) -> Some (n, xs)
+      | Some(Int number) -> Some (number, xs)
         | _ -> None
       )
     | _-> None
@@ -601,12 +601,12 @@ Grammar (<expr> is the start symbol)
     match s with
     | '('::'a'::'d'::'d'::' ':: xs -> (
       match parse_exprs xs with
-      | Some (es, xss) -> Some (Add es, xss)
+      | Some (expr, xss) -> Some (Add expr, xss)
       | _ -> None 
     )
     | '('::'m'::'u'::'l'::' ':: xs -> (
       match parse_exprs xs with
-      | Some (es, xss) -> Some (Mul es, xss)
+      | Some (expr, xss) -> Some (Mul expr, xss)
       | _ -> None 
     ) 
     | xs -> (match parse_num xs with 
@@ -617,24 +617,24 @@ Grammar (<expr> is the start symbol)
   
   and parse_exprs(s: char list): (expr list * char list) option =
     let rec helper(acc: (expr list * char list)): (expr list * char list) option =
-      let acc, s = acc in
+      let (acc, s) = acc in
       match s with
       | ')' :: xs -> Some (acc, trim xs)
       | '(' :: xs -> (
         match parse_expr(s) with
-        | Some(e, xss) -> helper (e :: acc, xss)
-        | None -> None
+        | Some(expr, ss) -> helper (expr :: acc, ss)
+        | _ -> None
       )
       | _ -> (
         match parse_num s with
-        | Some (num, xs) ->
-            helper (Int num :: acc, trim xs)
-        | None -> None
+        | Some (number, xs) ->
+            helper (Int number :: acc, trim xs)
+        | _ -> None
       )
     in
     match helper ([], s) with
-    | Some (exprs, xs) -> Some (List.rev exprs, xs)
-    | None -> None
+    | Some (expr, xs) -> Some (list_reverse expr, xs)
+    | _ -> None
   
   let parse (s : string) : expr option = 
     let c = trim (string_listize(s)) in
