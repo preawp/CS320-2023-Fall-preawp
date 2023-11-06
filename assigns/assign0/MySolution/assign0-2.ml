@@ -2,24 +2,24 @@
 
 #use "./../assign0.ml";;
 
+(*Checked*)
 (* ****** ****** *)
-(*recusively looks for potential divisors up to n0/2, if exists then not a prime number*)
-let isPrime(n0: int): bool =
-  if n0 <= 1 then 
-    false
-  else if n0 = 2 || n0 = 3 then
-    true
+
+(*
+Assign0-2: 10 points
+Please implement a function that tests whether
+a given natural number is a prime:
+fun isPrime(n0: int): bool
+*)
+
+(* ****** ****** *)
+
+let rec isPrime(n0: int): bool =
+  if n0 < 2 then false 
+  else if n0 = 2 || n0 = 3 then true
   else
-    let rec is_divisible i =
-      if i > n0 / 2 then 
-        true
-      else if n0 mod i = 0 then
-        false 
-      else 
-        is_divisible (i + 1)
-    
-    in is_divisible 2
-
-(* ****** ****** *)
-
-(* end of [CS320-2023-Fall-assign0-2.ml] *)
+   let rec helper(x: int):bool =
+     if x >= n0 then true
+     else if n0 mod x = 0 then false 
+     else helper(x+1)
+    in helper(2)

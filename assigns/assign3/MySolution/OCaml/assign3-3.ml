@@ -27,25 +27,18 @@ let lenlist (list: 'a list) : int =
 let list_map xs = foreach_to_map_list(list_foreach)(xs)
 
 (*non-recursive version of list_nchoose*)
-let list_nchoose (xs: 'a list)(n0: int): 'a list list =
-  let combine n xs =
-    let stack = ref [(n0, xs, [])] in
-    let result = ref [] in
-    while !stack <> [] do
-      match !stack with
-      | [] -> ()
-      | (n', xs', current) :: rest ->
-        stack := rest;
-        if n' = 0 then
-          result := list_append [list_reverse current] !result
-        else
-          match xs' with
-          | [] -> ()
-          | h :: t ->
-            stack := (n' - 1, t, h :: current) :: (n', t, current) :: !stack
-    done;
-    !result
-  in
-  if n0 <= 0 then [[]]
-  else if n0 > lenlist xs then []
-  else combine n0 xs
+list_make_fwork
+(fun work ->
+list_foreach
+(
+list_foldright
+(xs)([(0,[])])
+(
+fun x0 res ->
+list_make_fwork
+(
+fun work ->
+   list_foreach(res)
+  (fun (n, xs) -> (work(n,xs); if n < n0 then work(n+1, x0 :: xs)))))
+)(fun (n, xs) -> if n0 = n then work(xs)))
+;;

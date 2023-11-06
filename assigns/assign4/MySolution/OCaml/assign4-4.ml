@@ -25,7 +25,7 @@ let rec permutation lst =
 
   match lst with
   | [] -> fun () -> StrCons([], fun () -> StrNil)
-  | lst1 -> 
+| lst1 -> 
   let rec helper lst1 lst2 =
    match lst1 with
     | [] -> StrNil

@@ -1,3 +1,5 @@
+(*kinda*)
+
 #use "./../../../../classlib/OCaml/MyOCaml.ml";; 
 #use "./../../assign2.ml";;
 (*
@@ -36,20 +38,21 @@ let rec list_reverse_mylist (xs: 'a mylist): 'a mylist =
   | MyReverse l -> l 
   | MyAppend2 (t1, t2) -> MyAppend2 (list_reverse_mylist t2, list_reverse_mylist t1)
   
-  
+
+
 (*computes the element of a given mylist at a given position, otherwise exception*)
 let rec mylist_get_at (xs: 'a mylist) (i0: int): 'a =
   if i0 < 0 then mylist_subscript_exn ()
-  else :
+  else 
    match xs with
     | MyNil -> mylist_subscript_exn ()
-    | MyCons (x, _) ->
+    | MyCons (x, rest) ->
       if i0 = 0 then x 
       else mylist_get_at rest (i0 - 1)
     | MySnoc (init, x) ->
       let len_init = mylist_length init in
       if i0 = len_init then x
-      else i0 < len_init && i0 >= 0 then mylist_get_at init i0
+      else mylist_get_at init i0
     | MyReverse l -> mylist_get_at (list_reverse_mylist l) i0
     | MyAppend2 (l1, l2) ->
       let len_l1 = mylist_length l1 in

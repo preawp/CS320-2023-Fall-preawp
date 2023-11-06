@@ -15,6 +15,7 @@ is empty, raise the Empty exception
 exception Empty
 
 let list_last(xs: 'a list): 'a =
-  match xs with
+  let xs = list_foldleft xs [] (fun acc x -> x :: acc) in
+  match xs with 
   | [] -> raise Empty
-  | h :: t -> list_foldleft(t)(h)(fun x acc -> acc)
+  | h :: _ -> h

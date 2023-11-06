@@ -32,5 +32,4 @@ let list_map(xs) = foreach_to_map_list(list_foreach)(xs)
 
 (*non-recursive version of list_subsets*) 
 let list_subsets (xs: 'a list): 'a list list =
-  let cons_all x lsts = list_map lsts (fun lst -> x :: lst)  in
-  list_foldright xs [[]] (fun x acc -> list_append (cons_all x acc) acc)
+  list_foldright(xs)([[]])(fun x0 res -> list_append(res)(list_map(res)(fun xss -> x0 ::xss))) 

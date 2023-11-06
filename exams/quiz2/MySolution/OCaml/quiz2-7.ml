@@ -20,12 +20,8 @@ match xs with
 *)
 
 (* ************************************************ *)
-
-let rec helper (xs)(ys) =
-      match xs with
-      | [] -> ys
-      | x1 :: xs -> list_foldleft(ys)(xs)(fun x acc ->  x1 :: helper(xs)(ys))
-
-let list_append (xs)(ys) =
-      helper xs ys
+let list_append (xs: 'a list)(ys: 'a list) =
+      let rev_append  xs ys = list_foldleft xs ys (fun acc x -> x :: acc) in
+      let rev xs = rev_append xs [] in 
+      rev_append(rev xs) ys
 

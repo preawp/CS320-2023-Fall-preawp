@@ -12,9 +12,5 @@ Please give an implementation of list_reverse based on list_foldright
 (* ************************************************ *)
 
 let list_reverse(xs: 'a list): 'a list = 
-  match xs with 
-  | [] -> []
-  | _ -> list_foldright(xs)([])(fun x acc ->
-                                match x with 
-                                | [] -> acc
-                                | h :: t-> t :: acc);;
+  let snoc = list_foldright xs [] (fun x acc -> x :: acc) in  
+  list_foldright xs [] (fun x acc -> snoc acc x)

@@ -45,16 +45,12 @@ let list_tl lst =
   | _ :: x -> x
 ;;
 
-(*helper function to transpose the matrix*)
-let rec transpose_helper xss =
-  match xss with
-  | [] -> []
-  | [] :: _ -> []
-  | _ -> list_map list_hd xss :: transpose_helper (list_map list_tl xss)
-
-(*main function that recursively call to helper*)
-let rec matrix_transpose(xss: 'a list list): 'a list list= 
-  match xss with
-  | [] -> []
-  | [] :: _ -> []
-  | _ -> transpose_helper xss
+let rec matrix_transpose (xss: 'a list list): 'a list list =(
+  match xss with 
+    | [] -> []
+    | _ :: _ -> 
+      try 
+      let ys = list_map (xss)(list_head) in
+        ys :: matrix_transpose(list_map(xss)(list_tail))
+    with Empty -> [] 
+    )
