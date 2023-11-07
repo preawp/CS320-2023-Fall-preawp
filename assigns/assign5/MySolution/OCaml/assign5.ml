@@ -581,52 +581,54 @@ Grammar (<expr> is the start symbol)
 
 *)
 
-let is_digit_char c = c >= '0' && c <= '9'
+  let is_digit c = c >= '0' && c <= '9'
 
-let rec digits_to_int acc = function
+let rec dit2int acc = function
   | [] -> acc
-  | h :: t -> digits_to_int (acc * 10 + (int_of_char h - int_of_char '0')) t
+  | h :: t -> dit2int (acc * 10 + (int_of_char h - int_of_char '0')) t
 
-let rec parse_number cs =
+let rec parse_num cs =
   match cs with
   | [] -> None
-  | h :: t when is_digit_char h ->
+  | h :: t when h >= '0' && h <= '9' ->
     let rec parse_digits ds cs =
       match cs with
-      | h :: t when is_digit_char h -> parse_digits (ds @ [h]) t
-      | _ -> (ds, cs)
+      | h :: t when h >= '0' && h <= '9' -> parse_digits (ds @ [h]) t
+      | _ -> (ds, cs) 
     in
     let (digits, rest) = parse_digits [h] t in
-    Some (Int (digits_to_int 0 digits), rest)
+    Some (Int (dit2int 0 digits), rest) 
   | _ -> None
 
-let rec parse_expr cs =
-  match trim cs with
-  | '(' :: 'a' :: 'd' :: 'd' :: cs -> parse_add cs
-  | '(' :: 'm' :: 'u' :: 'l' :: cs -> parse_mul cs
-  | cs -> parse_number cs
 
-and parse_add cs =
-  match parse_exprs (trim cs) with
-  | Some (exprs, ')' :: rest) -> Some (Add exprs, rest)
-  | _ -> None
+  let rec parse_expr(s: char list): (expr * char list) option =
+    match trim s with
+    | '('::'a'::'d'::'d'::' ':: xs -> (
+      match parse_exprs trim xs with
+      | Some (xss, ')' :: rest) -> Some (Add xss, rest)
+      | _ -> None
+    )
+    | '('::'m'::'u'::'l'::' ':: xs -> (
+      match parse_exprs trim xs with
+      | Some (xss, ')' :: rest) -> Some (Mul xss, rest)
+      | _ -> None
+    
+    ) 
+    | xs -> parse_num xs
+  
 
-and parse_mul cs =
-  match parse_exprs (trim cs) with
-  | Some (exprs, ')' :: rest) -> Some (Mul exprs, rest)
-  | _ -> None
-
-and parse_exprs cs =
-  let rec helper acc cs =
-    match parse_expr cs with
-    | Some (expr, rest) -> helper (acc @ [expr]) (trim rest)
-    | None when acc <> [] -> Some (acc, cs)
-    | None -> None
-  in
-  helper [] cs
-
-let parse (s : string) : expr option =
-  let chars = string_listize s in
-  match parse_expr (trim chars) with
-  | Some (expr, []) -> Some expr
-  | _ -> None
+  
+  and parse_exprs s =
+    let rec helper acc cs= (
+        match parse_expr cs with
+        | Some(expr,rest) -> helper (list_append acc  [expr]) (trim rest)
+        | None when acc <> [] -> Some (acc, cs)
+        | _ -> None 
+      )
+  in helper []
+  
+  let parse (s : string) : expr option = 
+    let c = trim (string_listize(s)) in
+    match parse_expr c with
+    | Some(h,[]) -> Some h
+    | _ -> None
