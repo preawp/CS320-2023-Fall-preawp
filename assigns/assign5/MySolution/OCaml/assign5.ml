@@ -586,9 +586,7 @@ Grammar (<expr> is the start symbol)
   if (0 <= t) && (t <= 9) then Some(Int t) else None 
 
   let parse_num (s: char list) : (int * char list) option =
-    match s with
-    | ')' :: xs -> Some (0, s)
-    | ' ' :: xs -> Some (0, s)
+    match trim s with
     | d :: xs -> (
       match parse_digit d with
       | Some(Int number) -> Some (number, xs)
@@ -598,7 +596,7 @@ Grammar (<expr> is the start symbol)
 
 
   let rec parse_expr(s: char list): (expr * char list) option =
-    match s with
+    match trim s with
     | '('::'a'::'d'::'d'::' ':: xs -> (
       match parse_exprs xs with
       | Some (expr, xss) -> Some (Add expr, xss)
@@ -615,8 +613,8 @@ Grammar (<expr> is the start symbol)
     )
 
   
-  and parse_exprs(s: char list): (expr list * char list) option =
-    let rec helper(acc: (expr list * char list)): (expr list * char list) option =
+  and parse_exprs s =
+    let rec helper acc =
       let (acc, s) = acc in
       match s with
       | ')' :: xs -> Some (acc, trim xs)
@@ -639,8 +637,5 @@ Grammar (<expr> is the start symbol)
   let parse (s : string) : expr option = 
     let c = trim (string_listize(s)) in
     match parse_expr c with
-    | Some(h, t) -> (
-      match t with
-      | [] -> Some h
-      | _ -> None  )
+    | Some(h,[]) -> Some h
     | _ -> None
