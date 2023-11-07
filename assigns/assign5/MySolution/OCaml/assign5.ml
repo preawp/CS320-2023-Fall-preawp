@@ -581,25 +581,20 @@ Grammar (<expr> is the start symbol)
 
 *)
 
-  let is_digit c = c >= '0' && c <= '9'
-
-let rec dit2int acc = function
-  | [] -> acc
-  | h :: t -> dit2int (acc * 10 + (int_of_char h - int_of_char '0')) t
-
 let rec parse_num cs =
+  let is_digit_char c = c >= '0' && c <= '9' in
+  let rec parse_digits ds cs =
+    match cs with
+    | h :: t when is_digit_char h -> parse_digits (ds @ [h]) t
+    | _ -> (ds, cs)
+  in
+
   match cs with
   | [] -> None
-  | h :: t when h >= '0' && h <= '9' ->
-    let rec parse_digits ds cs =
-      match cs with
-      | h :: t when h >= '0' && h <= '9' -> parse_digits (ds @ [h]) t
-      | _ -> (ds, cs) 
-    in
+  | h :: t when is_digit_char h ->
     let (digits, rest) = parse_digits [h] t in
-    Some (Int (dit2int 0 digits), rest) 
+    Some (Int (List.fold_left (fun acc c -> acc * 10 + (int_of_char c - int_of_char '0')) 0 digits), rest)
   | _ -> None
-
 
   let rec parse_expr(s: char list): (expr * char list) option =
     match trim s with
