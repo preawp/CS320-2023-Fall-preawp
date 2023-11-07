@@ -46,6 +46,7 @@ type 'a parser = char list -> ('a * char list) option
 let parse (p : 'a parser) (s : string) : ('a * char list) option =
   p (explode s)
 
+(*identity fun / get the first ele*)
 let pure (x : 'a) : 'a parser =
   fun ls -> Some (x, ls)
 
