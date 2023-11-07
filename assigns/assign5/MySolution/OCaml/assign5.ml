@@ -581,19 +581,18 @@ Grammar (<expr> is the start symbol)
 
 *)
 
-let rec parse_num cs =
+let rec parse_num (s : char list) : (expr * char list) option =
   let is_digit_char c = c >= '0' && c <= '9' in
-  let rec parse_digits ds cs =
-    match cs with
-    | h :: t when is_digit_char h -> parse_digits (ds @ [h]) t
-    | _ -> (ds, cs)
+  let rec parse_digit cl xs =
+    match xs with
+    | h :: t when is_digit_char h -> parse_digit (list_append cl [h]) t
+    | _ -> (cl, xs)
   in
 
-  match cs with
-  | [] -> None
+  match s with
   | h :: t when is_digit_char h ->
-    let (digits, rest) = parse_digits [h] t in
-    Some (Int (List.fold_left (fun acc c -> acc * 10 + (int_of_char c - int_of_char '0')) 0 digits), rest)
+    let (d, rest) = parse_digit [h] t in
+    Some (Int (List.fold_left (fun acc c -> acc * 10 + (int_of_char c - int_of_char '0')) 0 d), rest)
   | _ -> None
 
   let rec parse_expr(s: char list): (expr * char list) option =
@@ -612,16 +611,19 @@ let rec parse_num cs =
     | xs -> parse_num xs
   
 
-  
-  and parse_exprs s =
-    let rec helper acc cs= (
-        match parse_expr cs with
-        | Some(expr,rest) -> helper (list_append acc  [expr]) (trim rest)
-        | None when acc <> [] -> Some (acc, cs)
-        | _ -> None 
+and parse_exprs xs =
+  let rec parse_exprs_helper acc xs =
+    match parse_expr xs with
+    | Some (expr, rest) -> (
+        match parse_exprs_helper (list_append acc [expr]) (trim rest) with
+        | Some (result, remaining) -> Some (result, remaining)
+        | None -> None
       )
-  in helper []
-  
+    | None when acc <> [] -> Some (acc, xs)
+    | _ -> None
+  in parse_exprs_helper [] 
+
+  (*main function*)
   let parse (s : string) : expr option = 
     let c = trim (string_listize(s)) in
     match parse_expr c with
