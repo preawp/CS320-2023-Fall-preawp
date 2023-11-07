@@ -598,14 +598,15 @@ Grammar (<expr> is the start symbol)
   let rec parse_expr(s: char list): (expr * char list) option =
     match trim s with
     | '('::'a'::'d'::'d'::' ':: xs -> (
-      match parse_exprs xs with
-      | Some (expr, xss) -> Some (Add expr, xss)
-      | _ -> None 
+      match parse_exprs trim xs with
+      | Some (xss, ')' :: rest) -> Some (Add xss, rest)
+      | _ -> None
     )
     | '('::'m'::'u'::'l'::' ':: xs -> (
-      match parse_exprs xs with
-      | Some (expr, xss) -> Some (Mul expr, xss)
-      | _ -> None 
+      match parse_exprs trim xs with
+      | Some (xss, ')' :: rest) -> Some (Mul xss, rest)
+      | _ -> None
+    
     ) 
     | xs -> (match parse_num xs with 
       | Some (n, xs') -> Some (Int n, xs')
@@ -614,25 +615,13 @@ Grammar (<expr> is the start symbol)
 
   
   and parse_exprs s =
-    let rec helper acc =
-      let (acc, s) = acc in
-      match s with
-      | ')' :: xs -> Some (acc, trim xs)
-      | '(' :: xs -> (
-        match parse_expr(s) with
-        | Some(expr, ss) -> helper (expr :: acc, ss)
-        | _ -> None
+    let rec helper acc cs= (
+        match parse_expr cs with
+        | Some(expr,rest) -> helper (list_append acc [expr]) (trim rest)
+        | None when acc <> [] -> Some (acc, cs)
+        | _ -> None 
       )
-      | _ -> (
-        match parse_num s with
-        | Some (number, xs) ->
-            helper (Int number :: acc, trim xs)
-        | _ -> None
-      )
-    in
-    match helper ([], s) with
-    | Some (expr, xs) -> Some (list_reverse expr, xs)
-    | _ -> None
+  in helper []
   
   let parse (s : string) : expr option = 
     let c = trim (string_listize(s)) in
