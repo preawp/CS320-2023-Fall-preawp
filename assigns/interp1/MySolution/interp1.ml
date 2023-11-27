@@ -1,3 +1,4 @@
+
 (*#use "./../../../classlib/OCaml/MyOCaml.ml";;*)
 (* ****** ****** *)
 (*
@@ -736,18 +737,22 @@ type com =
 
 type coms = com list 
 (*parsers for constant*)
-let parse_const () =
+let parse_int () =
   (let* _ = char '-' in
   let* x = natural in pure(Int(-x)))
   <|>
   let* x = natural in pure(Int x)
- <|> (let* _ = keyword "True" in pure(Bool true))
- <|>
- (let* _ = keyword "False" in pure(Bool false)) <|> (let* _ = keyword "Unit" in pure(Unit))
+
+let parse_bool () =
+  (let* _ = keyword "True" in pure(Bool true))
+  <|>
+  (let* _ = keyword "False" in pure(Bool false))
+let parse_const () =
+   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit))
 
 (*parser for commands to be fixed*)
 let parse_command =
-  (keyword "Push" >> parse_const () >>= fun x -> pure (Push x)) <|>
+  (keyword "Push" >> parse_const() >>= fun x -> pure (Push x)) <|>
   (keyword "Pop" >> pure Pop) <|>
   (keyword "Trace" >> pure Trace) <|>
   (keyword "Add" >> pure Add) <|>
@@ -762,7 +767,8 @@ let parse_command =
 
 let parse_commands = many (parse_command << keyword ";")
 
-let toString(x: const) : string =
+
+let tostring(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
      |  Bool x0 -> 
@@ -779,7 +785,7 @@ let interp (s : string) : string list option = (* YOUR CODE *)
                          | s0 :: s1 -> helper (s1) trace rest)
        | Trace :: rest -> (match stack with
                          | [] -> helper [] ("Panic" :: trace)[]
-                         | s0 :: s1 -> helper (Unit ::s1) (toString s0 :: trace) rest)
+                         | s0 :: s1 -> helper (Unit ::s1) (tostring s0 :: trace) rest)
        | Add::rest -> (match stack with
                          | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest
                          | _ -> helper [] ("Panic"::trace) [])
@@ -807,6 +813,9 @@ let interp (s : string) : string list option = (* YOUR CODE *)
        | Gt :: rest -> ( match stack with
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1>s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
+
+
+
 
        | [] -> trace
 
