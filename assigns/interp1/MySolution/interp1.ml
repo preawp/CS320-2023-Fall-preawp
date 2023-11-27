@@ -767,6 +767,8 @@ let parse_command : com parser =
   parsePush <|> parsePop <|> parseTrace <|> parseAdd <|>
   parseSub <|> parseMul <|> parseDiv <|> parseAnd <|>
   parseOr <|> parseNot <|> parseLt <|> parseGt
+
+
 let toString(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
@@ -774,13 +776,16 @@ let toString(x: const) : string =
            if x0 == true then " True"
            else "False"
      |  Unit  -> "Unit"
+  let rec stack_len cs =
+	list_foldleft(cs)(0)(fun acc x -> acc + 1)
 
 let interp (s : string) : string list option = (* YOUR CODE *)
    let rec helper stack trace program =
        match program with
        | Push h :: rest -> helper (h::stack) trace rest
-       | Pop :: rest -> (match stack with
-                         | [] -> helper [] ("Panic" :: trace)[]
+       | Pop :: rest -> if stack_len stack =0 then helper [] ("Panic" :: trace)[]
+                      else (match stack with
+                         | [] -> None
                          | s0 :: s1 -> helper (s1) trace rest)
        | Trace :: rest -> (match stack with
                          | [] -> helper [] ("Panic" :: trace)[]
@@ -813,11 +818,11 @@ let interp (s : string) : string list option = (* YOUR CODE *)
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1>s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
 
-       | [] -> trace
+       | [] -> Some trace
 
        in
     match string_parse (many (parse_command << keyword ";")) s  with
-   | Some(cmds, []) -> Some (helper [] [] cmds)
+   | Some(cmds, []) -> (helper [] [] cmds)
    | _ -> None
 
   let result =
