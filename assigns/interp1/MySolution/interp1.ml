@@ -751,22 +751,25 @@ let parse_const () =
 (*parser for commands*)
 let parse_command =
   ( let*_ = keyword "Push;" in parse_const() >>= fun x -> pure (Push x) )
-  <|> ( let*_ =  keyword "Pop;" in pure (Pop) )
-  <|> ( let*_ = keyword "Trace;"in pure (Trace) )
-  <|> ( let*_ = keyword "Add;" in pure (Add))
-  <|> ( let*_ = keyword "Sub;" in pure (Sub))
-  <|> ( let*_ = keyword "Mul;" in pure (Mul))
-  <|> ( let*_ = keyword "Div;" in pure (Div))
-  <|> ( let*_ = keyword "And;" in pure (And))
-  <|> ( let*_ = keyword "Or;" in pure (Or))
-  <|> ( let*_ = keyword "Not;" in pure (Not))
-  <|> ( let*_ = keyword "Lt;" in pure (Lt))
-  <|> ( let*_ = keyword "Gt;" in pure (Gt))
+  <|> ( let*_ =  keyword "Pop" in pure (Pop) )
+  <|> ( let*_ = keyword "Trace"in pure (Trace) )
+  <|> ( let*_ = keyword "Add" in pure (Add))
+  <|> ( let*_ = keyword "Sub" in pure (Sub))
+  <|> ( let*_ = keyword "Mul" in pure (Mul))
+  <|> ( let*_ = keyword "Div" in pure (Div))
+  <|> ( let*_ = keyword "And" in pure (And))
+  <|> ( let*_ = keyword "Or" in pure (Or))
+  <|> ( let*_ = keyword "Not" in pure (Not))
+  <|> ( let*_ = keyword "Lt" in pure (Lt))
+  <|> ( let*_ = keyword "Gt" in pure (Gt))
 
-let parse_coms = many (parse_command)
+let parse_commands =
+  whitespaces >>= fun _ ->
+  many (parse_command >>= fun cmd ->
+        keyword ";" >>= fun _ ->
+        pure cmd)
 
-
-let tostring(x: const) : string =
+let toString(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
      |  Bool x0 -> 
@@ -783,7 +786,7 @@ let interp (s : string) : string list option = (* YOUR CODE *)
                          | s0 :: s1 -> helper (s1) trace rest)
        | Trace :: rest -> (match stack with
                          | [] -> helper [] ("Panic" :: trace)[]
-                         | s0 :: s1 -> helper (Unit ::s1) (tostring s0 :: trace) rest)
+                         | s0 :: s1 -> helper (Unit ::s1) (toString s0 :: trace) rest)
        | Add::rest -> (match stack with
                          | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest
                          | _ -> helper [] ("Panic"::trace) [])
@@ -815,6 +818,6 @@ let interp (s : string) : string list option = (* YOUR CODE *)
        | [] -> trace
 
        in
-    match string_parse parse_coms s  with
+    match string_parse parse_commands s  with
    | Some(cmds, []) -> Some (helper [] [] cmds)
    | _ -> None
