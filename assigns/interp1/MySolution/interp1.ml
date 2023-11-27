@@ -813,7 +813,7 @@ let interp (s: string) =
 			| Trace -> (if stack_len stack = 0 then
 				(evaluate(stack)("Panic" :: trace)([])) else (
 					match stack with
-					| top :: st -> evaluate((Unit ()) :: st)(const_to_string (top) :: trace)(rest)
+					| top :: st -> evaluate((Unit ()) :: st)(toString(top) :: trace)(rest)
 					| [] -> None
 				))
 			| Add -> (if stack_len stack < 2 then
@@ -901,7 +901,7 @@ let interp (s: string) =
 			)
 		| [] -> Some trace
 		in
-	match string_parse_c (parse_coms []) s with 
+	match string_parse (parse_coms []) s with 
 	| Some (e, []) -> evaluate([])([])(e) 
 	| _ -> None  
 
