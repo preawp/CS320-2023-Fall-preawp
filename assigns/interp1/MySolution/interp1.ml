@@ -764,10 +764,8 @@ let parse_command =
   <|> ( keyword "Gt" >> pure Gt )
 
 let parse_commands =
-  whitespaces >>= fun _ ->
-  many (parse_command >>= fun cmd ->
-        keyword ";" >>= fun _ ->
-        pure cmd)
+  let single_command = parse_command << keyword ";" in
+  many single_command
 
 let toString(x: const) : string =
      match x with
