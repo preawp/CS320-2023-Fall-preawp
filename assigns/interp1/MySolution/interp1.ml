@@ -750,18 +750,18 @@ let parse_const () =
 
 (*parser for commands*)
 let parse_command =
-  ( let*_ = keyword "Push;" in parse_const() >>= fun x -> pure (Push x) )
-  <|> ( let*_ =  keyword "Pop" in pure (Pop) )
-  <|> ( let*_ = keyword "Trace"in pure (Trace) )
-  <|> ( let*_ = keyword "Add" in pure (Add))
-  <|> ( let*_ = keyword "Sub" in pure (Sub))
-  <|> ( let*_ = keyword "Mul" in pure (Mul))
-  <|> ( let*_ = keyword "Div" in pure (Div))
-  <|> ( let*_ = keyword "And" in pure (And))
-  <|> ( let*_ = keyword "Or" in pure (Or))
-  <|> ( let*_ = keyword "Not" in pure (Not))
-  <|> ( let*_ = keyword "Lt" in pure (Lt))
-  <|> ( let*_ = keyword "Gt" in pure (Gt))
+  ( keyword "Push" >> parse_const() >>= fun x -> pure (Push x) )
+  <|> ( keyword "Pop" >> pure Pop )
+  <|> ( keyword "Trace" >> pure Trace )
+  <|> ( keyword "Add" >> pure Add )
+  <|> ( keyword "Sub" >> pure Sub )
+  <|> ( keyword "Mul" >> pure Mul )
+  <|> ( keyword "Div" >> pure Div )
+  <|> ( keyword "And" >> pure And )
+  <|> ( keyword "Or" >> pure Or )
+  <|> ( keyword "Not" >> pure Not )
+  <|> ( keyword "Lt" >> pure Lt )
+  <|> ( keyword "Gt" >> pure Gt )
 
 let parse_commands =
   whitespaces >>= fun _ ->
