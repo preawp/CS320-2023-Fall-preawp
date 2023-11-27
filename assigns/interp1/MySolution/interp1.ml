@@ -798,73 +798,112 @@ let toString(x: const) : string =
 let rec stack_len cs =
 	list_foldleft(cs)(0)(fun acc x -> acc + 1)
 
-let interp (s : string) : string list option = (* YOUR CODE *)
-   let rec helper stack trace program =
-      
-       match program with
-        | [] -> None
-        | p ::rest ->( match p with
-        
- 
-                | Push h -> helper (h::stack) trace rest
-                 | Pop  -> if stack_len stack =0 then helper [] ("Panic" :: trace)[]
-                      else (match stack with
-                         | [] -> None
-                         | s0 :: s1 -> helper (s1) trace rest)
-                | Trace ->  if stack_len stack =0 then helper [] ("Panic" :: trace)[]
-                           else (match stack with
-                         | [] -> None
-                         | s0 :: s1 -> helper (Unit() ::s1) (toString s0 :: trace) rest)
-                 | Add ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                    else (match stack with
-                         | [] -> None
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest)
-                | Sub ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                         else (match stack with
-                              | [] -> None
-                              | (Int s1)::(Int s2)::s3 -> helper (Int (s1-s2)::s3) trace rest)
-                | Mul ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                    else (match stack with
-                         | [] -> None
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1*s2)::s3) trace rest)
-
-                  | Div ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                     else (match stack with
-                         | [] -> None
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1/s2)::s3) trace rest)
-
-                 | And -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                      else( match stack with
-                        | [] -> None
-                       | (Bool s1) :: (Bool s2) ::s3 -> helper (Bool(s1&&s2):: s3) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-                   | Or -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                      else( match stack with
-                        | [] -> None
-                       | (Bool s1) :: (Bool s2) ::s3 -> helper (Bool(s1||s2):: s3) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-                   | Not  -> if stack_len stack < 1 then helper [] ("Panic" :: trace)[]
-                    else( match stack with
-                        | [] -> None
-                       | (Bool s1) ::s2 -> helper (Bool(not s1):: s2) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-                  | Lt->if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                   else ( match stack with
-                    | [] -> None
-                       | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1<s2):: s3) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-                  | Gt -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                          else( match stack with
-                        | [] -> None
-                       | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1>s2):: s3) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-
-        )
-
-       in
-    match string_parse ((parse_coms [])) s  with
-   | Some(cmds, []) -> (helper [] [] cmds)
-   | _ -> None
+let interp (s: string) = 
+	let rec evaluate(stack: const list)(trace: string list)(prog: com list) = 
+		match prog with 
+		| c :: rest -> 
+			(match c with 
+			| Push ct -> evaluate(ct :: stack)(trace)(rest)
+			| Pop -> (if stack_len stack = 0 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| _ :: st -> evaluate(st)(trace)(rest)
+					| [] -> None
+				))
+			| Trace -> (if stack_len stack = 0 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| top :: st -> evaluate((Unit ()) :: st)(const_to_string (top) :: trace)(rest)
+					| [] -> None
+				))
+			| Add -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Int i, Int j) -> evaluate( Int (i + j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Sub -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Int i, Int j) -> evaluate( Int (i - j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Mul -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Int i, Int j) -> evaluate( Int (i * j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Div -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Int _, Int 0) -> (evaluate(stack)("Panic" :: trace)([]))
+						| (Int i, Int j) -> evaluate( Int (i / j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| And -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Bool i, Bool j) -> evaluate( Bool (i && j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Or -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Bool i, Bool j) -> evaluate( Bool (i || j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Not -> (if stack_len stack < 1 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: st -> 
+						(match i with
+						| Bool i -> evaluate( Bool (not i) :: st)(trace)(rest)
+						| _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Lt -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Int i, Int j) -> evaluate( Bool (i < j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			| Gt -> (if stack_len stack < 2 then
+				(evaluate(stack)("Panic" :: trace)([])) else (
+					match stack with
+					| i :: j :: st -> 
+						(match i, j with
+						| (Int i, Int j) -> evaluate( Bool (i > j) :: st)(trace)(rest)
+						| _, _ -> (evaluate(stack)("Panic" :: trace)([])))
+					| [] -> None
+				))
+			)
+		| [] -> Some trace
+		in
+	match string_parse_c (parse_coms []) s with 
+	| Some (e, []) -> evaluate([])([])(e) 
+	| _ -> None  
 
 
   let result =
