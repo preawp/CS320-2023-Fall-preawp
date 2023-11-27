@@ -750,25 +750,28 @@ let parse_bool () =
 let parse_const () =
    parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit))
 
-(*parser for commands to be fixed*)
+(*parser for commands ,to be fixed*)
+let parsePush = 
+  keyword "Push" >> parse_const () >>= fun x -> pure (Push x)
+let parsePop = keyword "Pop" >> pure Pop
+let parseTrace = keyword "Trace" >> pure Trace
+let parseAdd = keyword "Add" >> pure Add
+let parseSub = keyword "Sub" >> pure Sub
+let parseMul = keyword "Mul" >> pure Mul
+let parseDiv = keyword "Div" >> pure Div
+let parseAnd = keyword "And" >> pure And
+let parseOr = keyword "Or" >> pure Or
+let parseNot = keyword "Not" >> pure Not
+let parseLt = keyword "Lt" >> pure Lt
+let parseGt = keyword "Gt" >> pure Gt
+
 let parse_command =
-  (keyword "Push" >> parse_const() >>= fun x -> pure (Push x)) <|>
-  (keyword "Pop" >> pure Pop) <|>
-  (keyword "Trace" >> pure Trace) <|>
-  (keyword "Add" >> pure Add) <|>
-  (keyword "Sub" >> pure Sub) <|>
-  (keyword "Mul" >> pure Mul) <|>
-  (keyword "Div" >> pure Div) <|>
-  (keyword "And" >> pure And) <|>
-  (keyword "Or" >> pure Or) <|>
-  (keyword "Not" >> pure Not) <|>
-  (keyword "Lt" >> pure Lt) <|>
-  (keyword "Gt" >> pure Gt)
+  parsePush <|> parsePop <|> parseTrace <|> parseAdd <|>
+  parseSub <|> parseMul <|> parseDiv <|> parseAnd <|>
+  parseOr <|> parseNot <|> parseLt <|> parseGt
 
 let parse_commands = many (parse_command << keyword ";")
 
-let stack_len s=
-	list_foldleft(s)(0)(fun acc x -> acc + 1)
 let toString(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
@@ -777,60 +780,47 @@ let toString(x: const) : string =
            else "False"
      |  Unit  -> "Unit"
 
-let interp (s : string) : string list option =
-   let rec helper (stack: const list)(trace: string list)(program: com list) =
+let interp (s : string) : string list option = (* YOUR CODE *)
+   let rec helper stack trace program =
        match program with
-       | Push h :: rest -> helper (h::stack) (trace) (rest)
-       | Pop :: rest -> if stack_len stack = 0 then helper [] ("Panic" :: trace)[]
-                        else (match stack with
+       | Push h :: rest -> helper (h::stack) trace rest
+       | Pop :: rest -> (match stack with
+                         | [] -> helper [] ("Panic" :: trace)[]
                          | s0 :: s1 -> helper (s1) trace rest)
-                         | _ -> None 
-       | Trace :: rest -> if stack_len stack = 0 then helper [] ("Panic" :: trace)[]
-                        else  (match stack with
+       | Trace :: rest -> (match stack with
+                         | [] -> helper [] ("Panic" :: trace)[]
                          | s0 :: s1 -> helper (Unit ::s1) (toString s0 :: trace) rest)
-                         | _ -> None
-       | Add::rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                         else (match stack with
+       | Add::rest -> (match stack with
                          | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest
-                         | _ -> None)
-                         
-      | Sub::rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                         else (match stack with
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1-s2)::s3) trace rest
-                         | _ -> None)
-                         
-      | Mul::rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                         else (match stack with
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1*s2)::s3) trace rest
-                         | _ -> None)
-      | Div::rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                         else (match stack with
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1/s2)::s3) trace rest
-                         | _ -> None)
-       | And :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                       else ( match stack with
+                         | _ -> helper [] ("Panic"::trace) [])
+       | Sub :: rest -> ( match stack with
+                         | (Int s1) :: (Int s2) ::s3 -> helper (Int (s1-s2):: s3) trace rest
+                         | _ -> helper [] ("Panic":: trace) [])
+       | Mul :: rest -> ( match stack with
+                         | (Int s1) :: (Int s2) ::s3 -> helper ((Int (s1*s2)):: s3) trace rest
+                        | _ -> helper [] ("Panic":: trace) [])
+       | Div :: rest -> ( match stack with
+                         | (Int s1) :: (Int s2) ::s3 -> helper ((Int (s1/s2)):: s3) trace rest
+                        | _ -> helper [] ("Panic":: trace) [])
+       | And :: rest -> ( match stack with
                        | (Bool s1) :: (Bool s2) ::s3 -> helper (Bool(s1&&s2):: s3) trace rest
-                        | _ -> None)
-       | Or :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                        else ( match stack with
+                        | _ -> helper [] ("Panic":: trace) [])
+       | Or :: rest -> ( match stack with
                        | (Bool s1) :: (Bool s2) ::s3 -> helper (Bool(s1||s2):: s3) trace rest
-                        | _ -> None)
-       | Not :: rest -> if stack_len stack < 1 then helper [] ("Panic" :: trace)[]
-                           else ( match stack with
+                        | _ -> helper [] ("Panic":: trace) [])
+       | Not :: rest -> ( match stack with
                        | (Bool s1) ::s2 -> helper (Bool(not s1):: s2) trace rest
-                        | _ -> None) 
-       | Lt :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                         else ( match stack with
+                        | _ -> helper [] ("Panic":: trace) [])
+       | Lt :: rest -> ( match stack with
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1<s2):: s3) trace rest
-                        | _ -> None)
-       | Gt :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
-                       else ( match stack with
+                        | _ -> helper [] ("Panic":: trace) [])
+       | Gt :: rest -> ( match stack with
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1>s2):: s3) trace rest
-                      | _ -> None)
+                        | _ -> helper [] ("Panic":: trace) [])
 
-       | [] -> Some trace
+       | [] -> trace
 
        in
     match string_parse parse_commands s  with
-   | Some(cmds, []) -> (helper [] [] cmds)
+   | Some(cmds, []) -> Some (helper [] [] cmds)
    | _ -> None
