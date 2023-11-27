@@ -763,9 +763,7 @@ let parse_command =
   <|> ( keyword "Lt" >> pure Lt )
   <|> ( keyword "Gt" >> pure Gt )
 
-let parse_commands =
-  let single_command = parse_command << keyword ";" in
-  many single_command
+let parse_commands = many (parse_command << keyword ";")
 
 let toString(x: const) : string =
      match x with
