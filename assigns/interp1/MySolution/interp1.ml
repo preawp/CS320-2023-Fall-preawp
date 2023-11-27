@@ -805,29 +805,35 @@ let interp (s : string) : string list option = (* YOUR CODE *)
        | Push h :: rest -> helper (h::stack) trace rest
        | Pop :: rest -> if stack_len stack =0 then helper [] ("Panic" :: trace)[]
                       else (match stack with
-                         | [] -> None
-                         | s0 :: s1 -> helper (s1) trace rest)
+                         | s0 :: s1 -> helper (s1) trace rest
+                         | [] -> None)
+                         
        | Trace :: rest ->  if stack_len stack =0 then helper [] ("Panic" :: trace)[]
                           else (match stack with
-                         | [] -> None
-                         | s0 :: s1 -> helper (Unit() ::s1) (toString s0 :: trace) rest)
+                         | s0 :: s1 -> helper (Unit() ::s1) (toString s0 :: trace) rest
+                         | [] -> None)
+                         
        | Add::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
                     else (match stack with
-                         | [] -> None
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest)
+                         
+                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest
+                         | [] -> None)
+
       | Sub::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
                          else (match stack with
-                              | [] -> None
-                              | (Int s1)::(Int s2)::s3 -> helper (Int (s1-s2)::s3) trace rest)
+                             
+                              | (Int s1)::(Int s2)::s3 -> helper (Int (s1-s2)::s3) trace rest
+                              | [] -> None)
+
       | Mul::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
                     else (match stack with
-                         | [] -> None
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1*s2)::s3) trace rest)
+                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1*s2)::s3) trace rest
+                         | [] -> None)
 
        | Div::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
                     else (match stack with
-                         | [] -> None
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1/s2)::s3) trace rest)
+                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1/s2)::s3) trace rest
+                         | [] -> None)
 
        | And :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
                       else( match stack with
