@@ -736,19 +736,21 @@ type com =
   | Not | Lt | Gt
 
 type coms = com list 
-
-(*parsers for constant: bool/int/unit*)
-let parse_const () =
+(*parsers for constant*)
+let parse_int () =
   (let* _ = char '-' in
   let* x = natural in pure(Int(-x)))
   <|>
   let* x = natural in pure(Int x)
-   <|> 
-   (let* _ = keyword "True" in pure(Bool true))
+
+let parse_bool () =
+  (let* _ = keyword "True" in pure(Bool true))
   <|>
   (let* _ = keyword "False" in pure(Bool false))
-   <|> 
-   (let* _ = keyword "Unit" in pure(Unit))
+let parse_unit() =
+  (let* _ = keyword "Unit" in pure(Unit))
+let parse_const () =
+   parse_int () <|> parse_bool () <|> parse_unit ()
 
 (*parser for commands to be fixed*)
 let parse_command =
