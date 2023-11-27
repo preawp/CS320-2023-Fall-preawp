@@ -735,33 +735,34 @@ type com =
   | Not | Lt | Gt
 
 type coms = com list 
-(*parsers for constant: bool/int/unit*)
-let parse_const () =
+(*parsers for constant*)
+let parse_int () =
   (let* _ = char '-' in
   let* x = natural in pure(Int(-x)))
   <|>
   let* x = natural in pure(Int x)
-   <|> 
-   (let* _ = keyword "True" in pure(Bool true))
+
+let parse_bool () =
+  (let* _ = keyword "True" in pure(Bool true))
   <|>
   (let* _ = keyword "False" in pure(Bool false))
-   <|> 
-   (let* _ = keyword "Unit" in pure(Unit))
+let parse_const () =
+   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit))
 
-(*parser for commands*)
+(*parser for commands to be fixed*)
 let parse_command =
-  ( keyword "Push" >> parse_const() >>= fun x -> pure (Push x) )
-  <|> ( keyword "Pop" >> pure Pop )
-  <|> ( keyword "Trace" >> pure Trace )
-  <|> ( keyword "Add" >> pure Add )
-  <|> ( keyword "Sub" >> pure Sub )
-  <|> ( keyword "Mul" >> pure Mul )
-  <|> ( keyword "Div" >> pure Div )
-  <|> ( keyword "And" >> pure And )
-  <|> ( keyword "Or" >> pure Or )
-  <|> ( keyword "Not" >> pure Not )
-  <|> ( keyword "Lt" >> pure Lt )
-  <|> ( keyword "Gt" >> pure Gt )
+  (let* _ = keyword "Push" >> parse_const() >>= fun x -> pure (Push x)) <|>
+  (let* _ = keyword "Pop" >> pure Pop) <|>
+  (let* _ = keyword "Trace" >> pure Trace) <|>
+  (let* _ = keyword "Add" >> pure Add) <|>
+  (let* _ = keyword "Sub" >> pure Sub) <|>
+  (let* _ = keyword "Mul" >> pure Mul) <|>
+  (let* _ = keyword "Div" >> pure Div) <|>
+  (let* _ = keyword "And" >> pure And) <|>
+  (let* _ = keyword "Or" >> pure Or) <|>
+  (let* _ = keyword "Not" >> pure Not) <|>
+  (let* _ = keyword "Lt" >> pure Lt) <|>
+  (let* _ = keyword "Gt" >> pure Gt)
 
 let parse_commands = many (parse_command << keyword ";")
 
