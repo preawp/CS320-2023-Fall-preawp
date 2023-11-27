@@ -735,19 +735,24 @@ type com =
   | Mul | Div | And | Or
   | Not | Lt | Gt
 
+type coms = com list 
 (*parsers for constant*)
-let parse_int () =
-  (let* _ = char '-' in
-  let* x = natural in pure(Int(-x)))
-  <|>
-  let* y = natural in pure(Int y)
+let parse_const () : const parser = 
+	(let* _ = char '-' in
+	let* x = natural in pure  (Int (-x)))
+	<|>
+	(let* n = natural in
+	pure ( Int n ))
+	<|> 
+	(let* _ = keyword "True" in 
+	pure (Bool (true) ))
+	<|> 
+	(let* _ = keyword "False" in 
+	pure (Bool( false )))
+	<|> 
+	(let* _ = keyword "Unit" in
+	pure (Unit( () )))
 
-let parse_bool () =
-  (let* _ = keyword "True" in pure(Bool (true)))
-  <|>
-  (let* _ = keyword "False" in pure(Bool (false)))
-let parse_const () =
-   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure( Unit(())) )
 
 (*parser for commands ,to be fixed*)
 let rec parse_coms p =
@@ -790,7 +795,7 @@ let toString(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
      |  Bool x0 -> 
-           if x0 == true then " True"
+           if x0 = true then " True"
            else "False"
      |  Unit()  -> "Unit"
   
@@ -905,3 +910,12 @@ let interp (s: string) =
 	| _ -> None  
 
 
+  let result =
+     interp("Push 2;
+  Push 3;
+  Mul;
+  Push -2;
+  Push -3;
+  Mul;
+  Gt;
+  Trace;")
