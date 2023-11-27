@@ -735,36 +735,35 @@ type com =
   | Not | Lt | Gt
 
 type coms = com list 
-(*parsers for constant*)
-let parse_int () =
+(*parsers for constant: bool/int/unit*)
+let parse_const () =
   (let* _ = char '-' in
   let* x = natural in pure(Int(-x)))
   <|>
   let* x = natural in pure(Int x)
-
-let parse_bool () =
-  (let* _ = keyword "True" in pure(Bool true))
+   <|> 
+   (let* _ = keyword "True" in pure(Bool true))
   <|>
   (let* _ = keyword "False" in pure(Bool false))
-let parse_const () =
-   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit))
+   <|> 
+   (let* _ = keyword "Unit" in pure(Unit))
 
-(*parser for commands to be fixed*)
+(*parser for commands*)
 let parse_command =
-  (keyword "Push" >> parse_const() >>= fun x -> pure (Push x)) <|>
-  (keyword "Pop" >> pure Pop) <|>
-  (keyword "Trace" >> pure Trace) <|>
-  (keyword "Add" >> pure Add) <|>
-  (keyword "Sub" >> pure Sub) <|>
-  (keyword "Mul" >> pure Mul) <|>
-  (keyword "Div" >> pure Div) <|>
-  (keyword "And" >> pure And) <|>
-  (keyword "Or" >> pure Or) <|>
-  (keyword "Not" >> pure Not) <|>
-  (keyword "Lt" >> pure Lt) <|>
-  (keyword "Gt" >> pure Gt)
+  ( let*_ = keyword "Push;" in parse_const() >>= fun x -> pure (Push x) )
+  <|> ( let*_ =  keyword "Pop;" in pure (Pop) )
+  <|> ( let*_ = keyword "Trace;"in pure (Trace) )
+  <|> ( let*_ = keyword "Add;" in pure (Add))
+  <|> ( let*_ = keyword "Sub;" in pure (Sub))
+  <|> ( let*_ = keyword "Mul;" in pure (Mul))
+  <|> ( let*_ = keyword "Div;" in pure (Div))
+  <|> ( let*_ = keyword "And;" in pure (And))
+  <|> ( let*_ = keyword "Or;" in pure (Or))
+  <|> ( let*_ = keyword "Not;" in pure (Not))
+  <|> ( let*_ = keyword "Lt;" in pure (Lt))
+  <|> ( let*_ = keyword "Gt;" in pure (Gt))
 
-let parse_coms = many (parse_command << keyword ";")
+let parse_coms = many (parse_command)
 
 
 let tostring(x: const) : string =
@@ -812,9 +811,6 @@ let interp (s : string) : string list option = (* YOUR CODE *)
        | Gt :: rest -> ( match stack with
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1>s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
-
-
-
 
        | [] -> trace
 
