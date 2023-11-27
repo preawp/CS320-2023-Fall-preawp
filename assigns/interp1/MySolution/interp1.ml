@@ -735,20 +735,19 @@ type com =
   | Mul | Div | And | Or
   | Not | Lt | Gt
 
-type coms = com list 
 (*parsers for constant*)
 let parse_int () =
   (let* _ = char '-' in
   let* x = natural in pure(Int(-x)))
   <|>
-  let* x = natural in pure(Int x)
+  let* y = natural in pure(Int y)
 
 let parse_bool () =
-  (let* _ = keyword "True" in pure(Bool true))
+  (let* _ = keyword "True" in pure(Bool (true)))
   <|>
-  (let* _ = keyword "False" in pure(Bool false))
+  (let* _ = keyword "False" in pure(Bool (false)))
 let parse_const () =
-   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit()))
+   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure( Unit(())) )
 
 (*parser for commands ,to be fixed*)
 let rec parse_coms p =
@@ -786,29 +785,14 @@ let rec parse_coms p =
     pure(list_reverse(p))
   
 
-let rec int2str(i0: int): string = 
-	let rec digits x:int = if x < 10 then 1 else 1 + digits (x / 10) in
-		let rec getChar(x: int) (i: int) : char = 
-			let x = abs x in
-			if i <= 0 then 
-				let c = x mod 10 in
-				chr(c + 48)
-				else  
-				getChar (x/10) (i - 1)
-			in  
-			let len = if i0 >= 0 then digits i0 else digits (-1 * i0) in 
-			if i0 >= 0 then
-			string_init len (fun i -> getChar i0 (len-i - 1))
-			else 
-			string_init (len + 1) (fun i -> if i = 0 then '-' else getChar i0 (len-i))
-		
-
+  
 let toString(x: const) : string =
      match x with
-     |  Int x0 -> int2str x0
-     |  Bool true ->  " True"
-    |Bool false ->"False"
-     |  Unit _ -> "Unit"
+     |  Int x0 -> string_of_int x0
+     |  Bool x0 -> 
+           if x0 == true then " True"
+           else "False"
+     |  Unit()  -> "Unit"
   
 let rec stack_len cs =
 	list_foldleft(cs)(0)(fun acc x -> acc + 1)
@@ -921,12 +905,3 @@ let interp (s: string) =
 	| _ -> None  
 
 
-  let result =
-     interp("Push 2;
-  Push 3;
-  Mul;
-  Push -2;
-  Push -3;
-  Mul;
-  Gt;
-  Trace;")
