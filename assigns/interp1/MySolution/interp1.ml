@@ -751,25 +751,22 @@ let parse_const () =
    parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit))
 
 (*parser for commands ,to be fixed*)
-let parsePush = 
-  keyword "Push" >> parse_const () >>= fun x -> pure (Push x)
-let parsePop = keyword "Pop" >> pure Pop
-let parseTrace = keyword "Trace" >> pure Trace
-let parseAdd = keyword "Add" >> pure Add
-let parseSub = keyword "Sub" >> pure Sub
-let parseMul = keyword "Mul" >> pure Mul
-let parseDiv = keyword "Div" >> pure Div
-let parseAnd = keyword "And" >> pure And
-let parseOr = keyword "Or" >> pure Or
-let parseNot = keyword "Not" >> pure Not
-let parseLt = keyword "Lt" >> pure Lt
-let parseGt = keyword "Gt" >> pure Gt
-
-let parse_command =
+let parse_command : com parser =
+  let parsePush = keyword "Push" >> parse_const () >>= fun x -> pure (Push x) in
+  let parsePop = keyword "Pop" >> pure Pop in
+  let parseTrace = keyword "Trace" >> pure Trace in
+  let parseAdd = keyword "Add" >> pure Add in
+  let parseSub = keyword "Sub" >> pure Sub in
+  let parseMul = keyword "Mul" >> pure Mul in
+  let parseDiv = keyword "Div" >> pure Div in
+  let parseAnd = keyword "And" >> pure And in
+  let parseOr = keyword "Or" >> pure Or in
+  let parseNot = keyword "Not" >> pure Not in
+  let parseLt = keyword "Lt" >> pure Lt in
+  let parseGt = keyword "Gt" >> pure Gt in
   parsePush <|> parsePop <|> parseTrace <|> parseAdd <|>
   parseSub <|> parseMul <|> parseDiv <|> parseAnd <|>
   parseOr <|> parseNot <|> parseLt <|> parseGt
-
 let toString(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
@@ -822,3 +819,13 @@ let interp (s : string) : string list option = (* YOUR CODE *)
     match string_parse (many (parse_command << keyword ";")) s  with
    | Some(cmds, []) -> Some (helper [] [] cmds)
    | _ -> None
+
+  let result =
+     interp("Push 2;
+  Push 3;
+  Mul;
+  Push -2;
+  Push -3;
+  Mul;
+  Gt;
+  Trace;")
