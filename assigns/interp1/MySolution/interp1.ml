@@ -727,7 +727,7 @@ Notes:
 type const =
   | Int of int
   | Bool of bool
-  | Unit
+  | Unit of unit 
 
 type com =
   | Push of const
@@ -748,57 +748,45 @@ let parse_bool () =
   <|>
   (let* _ = keyword "False" in pure(Bool false))
 let parse_const () =
-   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit))
+   parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit()))
 
-(*parser for commands ,to be fixed*)let rec parse_prog(prog: com list) =
-	(
+(*parser for commands ,to be fixed*)
+let rec parse_coms p =
+	let* _ = whitespaces in
+  (
     let* _ = whitespaces in
     let* _ = keyword "Push" in
     let* _ = whitespaces in
-    let* c = parse_const  () in
-    (* let _ = print_string (const_to_string c) in  *)
+    let* con = parse_const  () in
     let* _ = char ';' in
     let* _ = whitespaces in
-    parse_prog ((Push c) :: prog))
+    parse_coms ((Push con) :: p))
     <|> 
-    (let* _ = keyword "Pop;" in
-    parse_prog (Pop :: prog))
+    (let* _ = keyword "Pop;" in parse_coms (Pop :: p))
     <|>
-    (let* _ = keyword "Trace;" in
-    parse_prog (Trace :: prog))
+    (let* _ = keyword "Trace;" in parse_coms (Trace :: p))
+    <|> 
+    (let* _ = keyword "Add;" in parse_coms (Add :: p))
+    <|>	
+    (let* _ = keyword "Sub;" in parse_coms (Sub :: p))
+    <|>	
+    (let* _ = keyword "Mul;" in parse_coms (Mul :: p))
+    <|>	
+    (let* _ = keyword "Div;" in parse_coms (Div :: p))
+    <|>	
+    (let* _ = keyword "And;" in parse_coms (And :: p))
+    <|>	
+    (let* _ = keyword "Or;" in parse_coms (Or :: p))
+    <|>	
+    (let* _ = keyword "Not;" in parse_coms (Not :: p))
+    <|>	
+    (let* _ = keyword "Lt;" in parse_coms (Lt :: p))
+    <|>	
+    (let* _ = keyword "Gt;" in parse_coms (Gt :: p))
     <|>
-    (let* _ = keyword "Add;" in
-    parse_prog (Add :: prog))
-    <|>	
-    (let* _ = keyword "Sub;" in
-    parse_prog (Sub :: prog))
-    <|>	
-    (let* _ = keyword "Mul;" in
-    parse_prog (Mul :: prog))
-    <|>	
-    (let* _ = keyword "Div;" in
-    parse_prog (Div :: prog))
-    <|>	
-    (let* _ = keyword "And;" in
-    parse_prog (And :: prog))
-    <|>	
-    (let* _ = keyword "Or;" in
-    parse_prog (Or :: prog))
-    <|>	
-    (let* _ = keyword "Not;" in
-    parse_prog (Not :: prog))
-    <|>	
-    (let* _ = keyword "Lt;" in
-    parse_prog (Lt :: prog))
-    <|>	
-    (let* _ = keyword "Gt;" in
-    parse_prog (Gt :: prog))
-    <|>
-    pure(list_reverse(prog))
+    pure(list_reverse(p))
   
-  let string_parse_c(p: 'a parser)(s: string) =
-    p(string_listize(s))
-  ;;
+
   
 let toString(x: const) : string =
      match x with
@@ -806,53 +794,74 @@ let toString(x: const) : string =
      |  Bool x0 -> 
            if x0 == true then " True"
            else "False"
-     |  Unit  -> "Unit"
+     |  Unit()  -> "Unit"
   
+let rec stack_len cs =
+	list_foldleft(cs)(0)(fun acc x -> acc + 1)
 
 let interp (s : string) : string list option = (* YOUR CODE *)
    let rec helper stack trace program =
        match program with
        | Push h :: rest -> helper (h::stack) trace rest
-       | Pop :: rest -> (match stack with
-                         | [] -> helper [] ("Panic" :: trace)[]
+       | Pop :: rest -> if stack_len stack =0 then helper [] ("Panic" :: trace)[]
+                      else (match stack with
+                         | [] -> None
                          | s0 :: s1 -> helper (s1) trace rest)
-       | Trace :: rest -> (match stack with
-                         | [] -> helper [] ("Panic" :: trace)[]
-                         | s0 :: s1 -> helper (Unit ::s1) (toString s0 :: trace) rest)
-       | Add::rest -> (match stack with
-                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest
-                         | _ -> helper [] ("Panic"::trace) [])
-       | Sub :: rest -> ( match stack with
-                         | (Int s1) :: (Int s2) ::s3 -> helper (Int (s1-s2):: s3) trace rest
-                         | _ -> helper [] ("Panic":: trace) [])
-       | Mul :: rest -> ( match stack with
-                         | (Int s1) :: (Int s2) ::s3 -> helper ((Int (s1*s2)):: s3) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-       | Div :: rest -> ( match stack with
-                         | (Int s1) :: (Int s2) ::s3 -> helper ((Int (s1/s2)):: s3) trace rest
-                        | _ -> helper [] ("Panic":: trace) [])
-       | And :: rest -> ( match stack with
+       | Trace :: rest ->  if stack_len stack =0 then helper [] ("Panic" :: trace)[]
+                          else (match stack with
+                         | [] -> None
+                         | s0 :: s1 -> helper (Unit() ::s1) (toString s0 :: trace) rest)
+       | Add::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                    else (match stack with
+                         | [] -> None
+                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1+s2)::s3) trace rest)
+      | Sub::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                         else (match stack with
+                              | [] -> None
+                              | (Int s1)::(Int s2)::s3 -> helper (Int (s1-s2)::s3) trace rest)
+      | Mul::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                    else (match stack with
+                         | [] -> None
+                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1*s2)::s3) trace rest)
+
+       | Div::rest ->  if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                    else (match stack with
+                         | [] -> None
+                         | (Int s1)::(Int s2)::s3 -> helper (Int (s1/s2)::s3) trace rest)
+
+       | And :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                      else( match stack with
+                        | [] -> None
                        | (Bool s1) :: (Bool s2) ::s3 -> helper (Bool(s1&&s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
-       | Or :: rest -> ( match stack with
+        | Or :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                      else( match stack with
+                        | [] -> None
                        | (Bool s1) :: (Bool s2) ::s3 -> helper (Bool(s1||s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
-       | Not :: rest -> ( match stack with
+       | Not :: rest -> if stack_len stack < 1 then helper [] ("Panic" :: trace)[]
+                    else( match stack with
+                        | [] -> None
                        | (Bool s1) ::s2 -> helper (Bool(not s1):: s2) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
-       | Lt :: rest -> ( match stack with
+       | Lt :: rest ->if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                   else ( match stack with
+                    | [] -> None
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1<s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
-       | Gt :: rest -> ( match stack with
+       | Gt :: rest -> if stack_len stack < 2 then helper [] ("Panic" :: trace)[]
+                          else( match stack with
+                        | [] -> None
                        | (Int s1) :: (Int s2) ::s3 -> helper (Bool(s1>s2):: s3) trace rest
                         | _ -> helper [] ("Panic":: trace) [])
 
-       | [] -> trace
+       | [] -> Some trace
 
        in
-    match string_parse (parse_prog [])  s  with
-   | Some(cmds, []) -> Some (helper [] [] cmds)
+    match string_parse ((parse_coms [])) s  with
+   | Some(cmds, []) -> (helper [] [] cmds)
    | _ -> None
+
 
   let result =
      interp("Push 2;
