@@ -770,8 +770,6 @@ let parse_command =
   parseSub <|> parseMul <|> parseDiv <|> parseAnd <|>
   parseOr <|> parseNot <|> parseLt <|> parseGt
 
-let parse_commands = many (parse_command << keyword ";")
-
 let toString(x: const) : string =
      match x with
      |  Int x0 -> string_of_int x0
@@ -821,6 +819,6 @@ let interp (s : string) : string list option = (* YOUR CODE *)
        | [] -> trace
 
        in
-    match string_parse parse_commands s  with
+    match string_parse (many (parse_command << keyword ";")) s  with
    | Some(cmds, []) -> Some (helper [] [] cmds)
    | _ -> None
