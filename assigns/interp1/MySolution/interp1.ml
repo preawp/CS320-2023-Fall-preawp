@@ -749,7 +749,7 @@ type com =
     (let* _ = keyword "False" in pure(Bool false))
   let parse_const () =
      parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit()))
-
+     
 let rec stack_len cs =
 	list_foldleft(cs)(0)(fun acc x -> acc + 1)
 
@@ -760,7 +760,8 @@ match c with
 | Bool false -> "False"
 | Unit _ -> "Unit"
 
-let rec parse_coms(p: com list) =
+
+let rec parse_coms(prog: com list) =
 	(
   let* _ = whitespaces in
   let* _ = keyword "Push" in
@@ -768,86 +769,119 @@ let rec parse_coms(p: com list) =
 	let* c = parse_const  () in
 	let* _ = char ';' in
 	let* _ = whitespaces in
-	parse_coms ((Push c) :: p))
+	parse_coms ((Push c) :: prog))
 	<|> 
 	(let* _ = keyword "Pop;" in
-	parse_coms (Pop :: p))
+	parse_coms (Pop :: prog))
 	<|>
 	(let* _ = keyword "Trace;" in
-	parse_coms (Trace :: p))
+	parse_coms (Trace :: prog))
 	<|>
 	(let* _ = keyword "Add;" in
-	parse_coms (Add :: p))
+	parse_coms (Add :: prog))
 	<|>	
 	(let* _ = keyword "Sub;" in
-	parse_coms (Sub :: p))
+	parse_coms (Sub :: prog))
 	<|>	
 	(let* _ = keyword "Mul;" in
-	parse_coms (Mul :: p))
+	parse_coms (Mul :: prog))
 	<|>	
 	(let* _ = keyword "Div;" in
-	parse_coms (Div :: p))
+	parse_coms (Div :: prog))
 	<|>	
 	(let* _ = keyword "And;" in
-	parse_coms (And :: p))
+	parse_coms (And :: prog))
 	<|>	
 	(let* _ = keyword "Or;" in
-	parse_coms (Or :: p))
+	parse_coms (Or :: prog))
 	<|>	
 	(let* _ = keyword "Not;" in
-	parse_coms (Not :: p))
+	parse_coms (Not :: prog))
 	<|>	
 	(let* _ = keyword "Lt;" in
-	parse_coms (Lt :: p))
+	parse_coms (Lt :: prog))
 	<|>	
 	(let* _ = keyword "Gt;" in
-	parse_coms (Gt :: p))
+	parse_coms (Gt :: prog))
 	<|>
-	pure(list_reverse(p))
+	pure(list_reverse(prog))
 
 let rec eval_steps s t p =
+  
   match p with 
   | hd :: rest -> 
     (match hd with 
-    | Push tl -> eval_steps (tl :: s) t rest
-    | Pop -> (
+    | Push tl -> eval_steps(tl :: s)(t)(rest)
+    | Pop -> (if stack_len s = 0 then
+      (eval_steps(s)("Panic" :: t)([])) else (
         match s with
-        | _ :: st -> eval_steps st t rest
-        | [] -> eval_steps s ("Panic" :: t) []
-      )
-    | Trace -> (
-        match s with
-        | top :: st -> eval_steps ((Unit ()) :: st) (toString top :: t) rest
-        | [] -> eval_steps s ("Panic" :: t) []
-      )
-
-    | Not -> (
-        match s with
-        | Bool i :: st -> eval_steps (Bool (not i) :: st) (t) rest
-        | [] -> eval_steps s ("Panic" :: t) [])
-
-    | Add | Sub | Mul | Div | And | Or | Lt | Gt -> (
-        match s with
-        | i :: j :: st -> (
-            match (i, j) with
-            | (Int a, Int b) when hd = Add -> eval_steps (Int (a + b) :: st) t rest
-            | (Int a, Int b) when hd = Sub -> eval_steps (Int (a - b) :: st) t rest
-            | (Int a, Int b) when hd = Mul -> eval_steps (Int (a * b) :: st) t rest
-            | (Int a, Int b) when hd = Div -> eval_steps (Int (a / b) :: st) t rest
-            | (Bool i, Bool j) when hd = And -> eval_steps( Bool(i && j) :: st) t rest
-            | (Bool i, Bool j) when hd = Or -> eval_steps( Bool(i || j) :: st) t rest
-            | (Bool i, Bool j) when hd = Gt -> eval_steps( Bool(i > j) :: st) t rest
-            | (Bool i, Bool j) when hd = Lt -> eval_steps( Bool(i < j) :: st) t rest
-            | _ -> eval_steps s ("Panic" :: t) []
-          )
-        | _ -> eval_steps s ("Panic" :: t) []
+        | _ :: st -> eval_steps(st)(t)(rest)
+        | [] -> None
       ))
-  | [] -> Some t
+    | Trace -> (if stack_len s = 0 then
+      (eval_steps(s)("Panic" :: t)([])) else (
+        match s with
+        | top :: st -> eval_steps((Unit ()) :: st)(toString (top) :: t)(rest)
+        | [] -> None
+      ))
+    | Add | Sub | Mul | Lt | Gt -> (if stack_len s < 2 then (eval_steps(s)("Panic" :: t)([])) 
+        else (
+        match s with
+        | i :: j :: st -> 
+          (match i, j with
+          | (Int i, Int j) ->
+              if hd = Add then eval_steps( Int (i + j) :: st)(t)(rest)
+              else if hd = Sub then eval_steps( Int (i - j) :: st)(t)(rest)
+              else if hd = Mul then eval_steps( Int (i * j) :: st)(t)(rest)
+              else if hd = Lt then  eval_steps( Bool (i < j) :: st)(t)(rest)
+              else eval_steps( Bool (i > j) :: st)(t)(rest)
+          | _ -> (eval_steps(s)("Panic" :: t)([])))
+        | [] -> None
+      ))
 
+      | Div -> (if stack_len s < 2 then (eval_steps(s)("Panic" :: t)([])) else (
+          match s with
+          | i :: j :: st -> 
+            (match i, j with
+            | (Int _, Int 0) -> (eval_steps(s)("Panic" :: t)([]))
+            | (Int i, Int j) -> eval_steps( Int (i / j) :: st)(t)(rest)
+            | _ -> (eval_steps(s)("Panic" :: t)([])))
+          | [] -> None
+        ))
+  
+    | And | Or -> (if stack_len s < 2 then (eval_steps(s)("Panic" :: t)([])) else (
+        match s with
+        | i :: j :: st -> 
+          (match i, j with
+          | (Bool i, Bool j) -> 
+                if hd = And then eval_steps( Bool (i && j) :: st)(t)(rest)
+                else eval_steps( Bool (i || j) :: st)(t)(rest)
+          | _-> (eval_steps(s)("Panic" :: t)([])))
+        | [] -> None
+      ))
+
+    | Not -> (if stack_len s < 1 then
+      (eval_steps(s)("Panic" :: t)([])) else (
+        match s  with
+        | i :: st -> 
+          (match i with
+          | Bool i -> eval_steps( Bool (not i) :: st)(t)(rest)
+          | _ -> (eval_steps(s)("Panic" :: t)([])))
+        | [] -> None
+      ))
+    )
+  | [] -> Some t
 
 let interp (s: string) : string list option =
 	match string_parse (parse_coms []) s with 
-	| Some (cmds, []) -> eval_steps([])([])(cmds) 
+	| Some (e, []) -> eval_steps([])([])(e) 
 	| _ -> None  
 
-  
+let result = interp ("Push 2;
+Push 3;
+Mul;
+Push -2;
+Push -3;
+Mul;
+Gt;
+Trace;") 
