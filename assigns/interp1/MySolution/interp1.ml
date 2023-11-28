@@ -749,9 +749,7 @@ type com =
     (let* _ = keyword "False" in pure(Bool false))
   let parse_const () =
      parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit()))
-     
-let rec stack_len cs =
-	list_foldleft(cs)(0)(fun acc x -> acc + 1)
+  
 
 let toString(c) = 
 match c with
@@ -807,24 +805,18 @@ let rec parse_coms(prog: com list) =
 	pure(list_reverse(prog))
 
 let rec eval_steps s t p =
-  
   match p with 
   | hd :: rest -> 
     (match hd with 
     | Push tl -> eval_steps(tl :: s)(t)(rest)
-    | Pop -> (if stack_len s = 0 then
-      (eval_steps(s)("Panic" :: t)([])) else (
+    | Pop | Trace -> (if List.length s = 0 then (eval_steps(s)("Panic" :: t)([])) else (
         match s with
-        | _ :: st -> eval_steps(st)(t)(rest)
+        | i :: j -> if hd = Pop then eval_steps(j)(t)(rest)
+                    else eval_steps((Unit ()) :: j)(toString(i) :: t)(rest)
         | [] -> None
       ))
-    | Trace -> (if stack_len s = 0 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | top :: st -> eval_steps((Unit ()) :: st)(toString (top) :: t)(rest)
-        | [] -> None
-      ))
-    | Add | Sub | Mul | Lt | Gt -> (if stack_len s < 2 then (eval_steps(s)("Panic" :: t)([])) 
+
+    | Add | Sub | Mul | Lt | Gt -> (if List.length s < 2 then (eval_steps(s)("Panic" :: t)([])) 
         else (
         match s with
         | i :: j :: st -> 
@@ -839,7 +831,7 @@ let rec eval_steps s t p =
         | [] -> None
       ))
 
-      | Div -> (if stack_len s < 2 then (eval_steps(s)("Panic" :: t)([])) else (
+      | Div -> (if List.length s < 2 then (eval_steps(s)("Panic" :: t)([])) else (
           match s with
           | i :: j :: st -> 
             (match i, j with
@@ -849,7 +841,7 @@ let rec eval_steps s t p =
           | [] -> None
         ))
   
-    | And | Or -> (if stack_len s < 2 then (eval_steps(s)("Panic" :: t)([])) else (
+    | And | Or -> (if List.length s < 2 then (eval_steps(s)("Panic" :: t)([])) else (
         match s with
         | i :: j :: st -> 
           (match i, j with
@@ -860,8 +852,7 @@ let rec eval_steps s t p =
         | [] -> None
       ))
 
-    | Not -> (if stack_len s < 1 then
-      (eval_steps(s)("Panic" :: t)([])) else (
+    | Not -> (if List.length s < 1 then (eval_steps(s)("Panic" :: t)([])) else (
         match s  with
         | i :: st -> 
           (match i with
