@@ -749,7 +749,7 @@ type com =
     (let* _ = keyword "False" in pure(Bool false))
   let parse_const () =
      parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit()))
-     
+
 let rec stack_len cs =
 	list_foldleft(cs)(0)(fun acc x -> acc + 1)
 
@@ -760,8 +760,7 @@ match c with
 | Bool false -> "False"
 | Unit _ -> "Unit"
 
-
-let rec parse_coms(prog: com list) =
+let rec parse_coms(p: com list) =
 	(
   let* _ = whitespaces in
   let* _ = keyword "Push" in
@@ -769,146 +768,75 @@ let rec parse_coms(prog: com list) =
 	let* c = parse_const  () in
 	let* _ = char ';' in
 	let* _ = whitespaces in
-	parse_coms ((Push c) :: prog))
+	parse_coms ((Push c) :: p))
 	<|> 
 	(let* _ = keyword "Pop;" in
-	parse_coms (Pop :: prog))
+	parse_coms (Pop :: p))
 	<|>
 	(let* _ = keyword "Trace;" in
-	parse_coms (Trace :: prog))
+	parse_coms (Trace :: p))
 	<|>
 	(let* _ = keyword "Add;" in
-	parse_coms (Add :: prog))
+	parse_coms (Add :: p))
 	<|>	
 	(let* _ = keyword "Sub;" in
-	parse_coms (Sub :: prog))
+	parse_coms (Sub :: p))
 	<|>	
 	(let* _ = keyword "Mul;" in
-	parse_coms (Mul :: prog))
+	parse_coms (Mul :: p))
 	<|>	
 	(let* _ = keyword "Div;" in
-	parse_coms (Div :: prog))
+	parse_coms (Div :: p))
 	<|>	
 	(let* _ = keyword "And;" in
-	parse_coms (And :: prog))
+	parse_coms (And :: p))
 	<|>	
 	(let* _ = keyword "Or;" in
-	parse_coms (Or :: prog))
+	parse_coms (Or :: p))
 	<|>	
 	(let* _ = keyword "Not;" in
-	parse_coms (Not :: prog))
+	parse_coms (Not :: p))
 	<|>	
 	(let* _ = keyword "Lt;" in
-	parse_coms (Lt :: prog))
+	parse_coms (Lt :: p))
 	<|>	
 	(let* _ = keyword "Gt;" in
-	parse_coms (Gt :: prog))
+	parse_coms (Gt :: p))
 	<|>
-	pure(list_reverse(prog))
+	pure(list_reverse(p))
 
 let rec eval_steps s t p =
   match p with 
   | hd :: rest -> 
     (match hd with 
-    | Push tl -> eval_steps(tl :: s)(t)(rest)
-    | Pop -> (if stack_len s = 0 then
-      (eval_steps(s)("Panic" :: t)([])) else (
+    | Push tl -> eval_steps (tl :: s) t rest
+    | Pop -> (
         match s with
-        | _ :: st -> eval_steps(st)(t)(rest)
-        | [] -> None
-      ))
-    | Trace -> (if stack_len s = 0 then
-      (eval_steps(s)("Panic" :: t)([])) else (
+        | _ :: st -> eval_steps st t rest
+        | [] -> eval_steps s ("Panic" :: t) []
+      )
+    | Trace -> (
         match s with
-        | top :: st -> eval_steps((Unit ()) :: st)(toString (top) :: t)(rest)
-        | [] -> None
-      ))
-    | Add -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
+        | top :: st -> eval_steps ((Unit ()) :: st) (toString top :: t) rest
+        | [] -> eval_steps s ("Panic" :: t) []
+      )
+    | Add | Sub | Mul | Div | And | Or | Not | Lt | Gt -> (
         match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Int i, Int j) -> eval_steps( Int (i + j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
+        | i :: j :: st -> (
+            match (i, j) with
+            | (Int a, Int b) when hd = Add -> eval_steps (Int (a + b) :: st) t rest
+            | (Int a, Int b) when hd = Sub -> eval_steps (Int (a - b) :: st) t rest
+            | (Int a, Int b) when hd = Mul -> eval_steps (Int (a * b) :: st) t rest
+            | (Int a, Int b) when hd = Div -> eval_steps (Int (a / b) :: st) t rest
+            
+            | _ -> eval_steps s ("Panic" :: t) []
+          )
+        | _ -> eval_steps s ("Panic" :: t) []
       ))
-    | Sub -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Int i, Int j) -> eval_steps( Int (i - j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | Mul -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Int i, Int j) -> eval_steps( Int (i * j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | Div -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Int _, Int 0) -> (eval_steps(s)("Panic" :: t)([]))
-          | (Int i, Int j) -> eval_steps( Int (i / j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | And -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Bool i, Bool j) -> eval_steps( Bool (i && j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | Or -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s  with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Bool i, Bool j) -> eval_steps( Bool (i || j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | Not -> (if stack_len s < 1 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s  with
-        | i :: st -> 
-          (match i with
-          | Bool i -> eval_steps( Bool (not i) :: st)(t)(rest)
-          | _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | Lt -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Int i, Int j) -> eval_steps( Bool (i < j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    | Gt -> (if stack_len s < 2 then
-      (eval_steps(s)("Panic" :: t)([])) else (
-        match s with
-        | i :: j :: st -> 
-          (match i, j with
-          | (Int i, Int j) -> eval_steps( Bool (i > j) :: st)(t)(rest)
-          | _, _ -> (eval_steps(s)("Panic" :: t)([])))
-        | [] -> None
-      ))
-    )
   | [] -> Some t
+
 
 let interp (s: string) : string list option =
 	match string_parse (parse_coms []) s with 
-	| Some (e, []) -> eval_steps([])([])(e) 
+	| Some (cmds, []) -> eval_steps([])([])(cmds) 
 	| _ -> None  
