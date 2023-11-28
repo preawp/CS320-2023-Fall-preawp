@@ -820,7 +820,13 @@ let rec eval_steps s t p =
         | top :: st -> eval_steps ((Unit ()) :: st) (toString top :: t) rest
         | [] -> eval_steps s ("Panic" :: t) []
       )
-    | Add | Sub | Mul | Div | And | Or | Not | Lt | Gt -> (
+
+    | Not -> (
+        match s with
+        | Bool i :: st -> eval_steps (Bool (not i) :: st) (t) rest
+        | [] -> eval_steps s ("Panic" :: t) [])
+
+    | Add | Sub | Mul | Div | And | Or | Lt | Gt -> (
         match s with
         | i :: j :: st -> (
             match (i, j) with
@@ -828,7 +834,10 @@ let rec eval_steps s t p =
             | (Int a, Int b) when hd = Sub -> eval_steps (Int (a - b) :: st) t rest
             | (Int a, Int b) when hd = Mul -> eval_steps (Int (a * b) :: st) t rest
             | (Int a, Int b) when hd = Div -> eval_steps (Int (a / b) :: st) t rest
-            
+            | (Bool i, Bool j) when hd = And -> eval_steps( Bool(i && j) :: st) t rest
+            | (Bool i, Bool j) when hd = Or -> eval_steps( Bool(i || j) :: st) t rest
+            | (Bool i, Bool j) when hd = Gt -> eval_steps( Bool(i > j) :: st) t rest
+            | (Bool i, Bool j) when hd = Lt -> eval_steps( Bool(i < j) :: st) t rest
             | _ -> eval_steps s ("Panic" :: t) []
           )
         | _ -> eval_steps s ("Panic" :: t) []
@@ -840,3 +849,5 @@ let interp (s: string) : string list option =
 	match string_parse (parse_coms []) s with 
 	| Some (cmds, []) -> eval_steps([])([])(cmds) 
 	| _ -> None  
+
+  
