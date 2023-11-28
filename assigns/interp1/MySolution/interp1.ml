@@ -723,33 +723,33 @@ Notes:
 2. You may NOT use OCaml standard library functions directly.
 
 *)
-type const = 
-| Int of int
-| Bool of bool
-| Unit of unit
+
+type const =
+  | Int of int
+  | Bool of bool
+  | Unit of unit 
 
 type com =
-  | Push of const | Pop | Trace
-  | Add | Sub | Mul | Div
-  | And | Or | Not
-  | Lt | Gt
+  | Push of const
+  | Pop | Trace | Add | Sub
+  | Mul | Div | And | Or
+  | Not | Lt | Gt
 
-let parse_const () : const parser = 
-	(let* _ = char '-' in
-	let* x = natural in pure  (Int (-x)))
-	<|>
-	(let* n = natural in
-	pure ( Int n ))
-	<|> 
-	(let* _ = keyword "True" in 
-	pure (Bool (true) ))
-	<|> 
-	(let* _ = keyword "False" in 
-	pure (Bool( false )))
-	<|> 
-	(let* _ = keyword "Unit" in
-	pure (Unit( () )))
-
+  type coms = com list 
+  (*parsers for constant*)
+  let parse_int () =
+    (let* _ = char '-' in
+    let* x = natural in pure(Int(-x)))
+    <|>
+    let* x = natural in pure(Int x)
+  
+  let parse_bool () =
+    (let* _ = keyword "True" in pure(Bool true))
+    <|>
+    (let* _ = keyword "False" in pure(Bool false))
+  let parse_const () =
+     parse_int () <|> parse_bool () <|> (let* _ = keyword "Unit" in pure(Unit()))
+     
 let rec stack_len cs =
 	list_foldleft(cs)(0)(fun acc x -> acc + 1)
 
