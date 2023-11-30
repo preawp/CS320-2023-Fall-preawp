@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 (*#use "./../../../classlib/OCaml/MyOCaml.ml";;*)
 (* ****** ****** *)
@@ -712,6 +713,10 @@ let keyword(s: string) =
 (* ****** ****** *)
 
 (* end of [CS320-2023-Fall-classlib-MyOCaml.ml] *)
+=======
+#use "./../../../classlib/OCaml/MyOCaml.ml";;
+
+>>>>>>> upstream/main
 (*
 
 Please implement the interp function following the
@@ -724,6 +729,7 @@ Notes:
 
 *)
 
+<<<<<<< HEAD
 type const =
   | Int of int
   | Bool of bool
@@ -873,3 +879,6 @@ Push -3;
 Mul;
 Gt;
 Trace;") 
+=======
+let interp (s : string) : string list option = (* YOUR CODE *)
+>>>>>>> upstream/main
