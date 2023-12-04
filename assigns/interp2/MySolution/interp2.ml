@@ -960,22 +960,6 @@ let interp (s : string) : string list option =
 (* ------------------------------------------------------------ *)
 
 (* interp from file *)
-
-let read_file (fname : string) : string =
-  let fp = open_in fname in
-  let s = string_make_fwork (fun work ->
-      try
-        while true do
-          work (input_char fp)
-        done
-      with _ -> ())
-  in
-  close_in fp; s
-
-let interp_file (fname : string) : string list option =
-  let src = read_file fname in
-  interp src
-
   
 
 let result = (interp("
