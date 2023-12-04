@@ -728,7 +728,7 @@ type const =
   | Bool of bool
   | Unit
   | Sym of string
-  | Closure of const * (const * const) list * (com list)
+  | Closure of (string * ((string * const) list) * com list)
 
 and com =
   | Push of const | Pop | Swap | Trace
@@ -740,7 +740,7 @@ and com =
   | Fun of com list
   | Call | Return 
   
-type coms = com list
+and coms = com list
 
 (* ------------------------------------------------------------ *)
 
@@ -762,7 +762,11 @@ let parse_unit =
 let parse_const =
   parse_int <|>
   parse_bool <|>
-  parse_unit
+  parse_unit <|>
+  (let* fst_char = parse_char in
+  let* rst_chars = many(parse_char_or_int) in
+  pure(Sym (string_append (str fst_char) (string_of_list rst_chars))))
+
 
 let rec parse_com () = 
   (keyword "Push" >> parse_const >>= fun c -> pure (Push c)) <|>
@@ -801,9 +805,8 @@ let parse_coms = many (parse_com() << keyword ";")
 
 type stack = const list
 type trace = string list
-type var = (const * const) list
 type prog = coms
-
+type var = (string * const) list
 let rec str_of_nat (n : int) : string =
   let d = n mod 10 in 
   let n0 = n / 10 in
@@ -824,8 +827,7 @@ let toString (c : const) : string =
   | Bool false -> "False"
   | Unit -> "Unit"
   | Sym s-> s
-  | Closure (Sym s, _, _) -> string_append (string_append "Fun<" s) (">")
-
+  | Closure (n,_,_) -> string_concat_list ["Fun<";n;">"]
 
 let rec eval (s : stack) (t : trace) (v : var) (p : prog) : trace =
   match p with
@@ -908,32 +910,33 @@ let rec eval (s : stack) (t : trace) (v : var) (p : prog) : trace =
     )
   | Bind :: p0 -> 
     (match s with
-    | Sym x :: v0 :: s0 -> eval s0 t (((Sym x), v0) :: v ) p0
+    | Sym x :: v0 :: s0 -> eval s0 t (((x), v0) :: v ) p0
     | _ :: _ :: s0 -> eval [] ("Panic" :: t) v []
     | _ :: s0 -> eval [] ("Panic" :: t) v []
     | [] -> eval [] ("Panic" :: t) v []
     )
-  | Lookup :: p0 -> 
-    let rec helper con1 var1 = 
-        match var1 with
-        | (a1,a2) :: v0 -> if con1 = a1 then Some(a2) else helper con1 v0
-        | [] -> None in 
-    (match s with
-    | Sym x :: s0 -> (match (helper (Sym(x)) v) with
-        | Some (x0) -> eval (x0 :: s0) t v p0
-        | None -> eval [] ("Panic" :: t) v [])
-    | _ :: s0 -> eval [] ("Panic" :: t) v []
-    | [] -> eval [] ("Panic" :: t) v []
-    )
+
+ | Lookup :: p0 ->
+      let rec helper cs a s00 = 
+        (match cs with
+        | [] -> eval [] t [] []
+        | (n, value)::tl -> if n = a then eval (value::s00) t v p0 
+                             else helper tl a s00) in
+      (match s with
+      | Sym a :: s0 -> helper v a s0 
+      | [] -> eval [] ("Panic" :: t) [] []
+      | _ :: s0 -> eval [] ("Panic" :: t) [] [])
+
+
   | Fun f :: p0 -> (
       match s with
-      | Sym a :: s0 -> eval ((Closure(Sym a, v, f)):: s0) t v p0
+      | Sym a :: s0 -> eval ((Closure(a, v, f)):: s0) t v p0
       | _ :: s0 -> eval [] ("Panic" :: t) v []
       | [] -> eval [] ("Panic" :: t) v []
   )
   | Call :: p0 -> 
     (match s with 
-    | Closure (f, i, j) :: a :: s0 -> eval (a :: (Closure (Sym "cc", v, p0) :: s0)) t ((f, Closure(f, i, j)) :: i) j
+    | Closure (f, i, j) :: a :: s0 -> eval (a :: (Closure (f, v, p0) :: s0)) t ((f, Closure(f, i, j)) :: i) j
     | _ :: _ :: s0 -> eval [] ("Panic" :: t) v []
     | _ ::s0 -> eval [] ("Panic" :: t) v []
     | [] -> eval [] ("Panic" :: t) v []
@@ -972,3 +975,28 @@ let read_file (fname : string) : string =
 let interp_file (fname : string) : string list option =
   let src = read_file fname in
   interp src
+
+  
+
+let result = (interp("
+    Push poly;
+    Fun
+Push x; Bind;
+      Push x;
+      Lookup;
+      Push x;
+      Lookup;
+      Mul;
+      Push -4;
+      Push x;
+      Lookup;
+      Mul;
+Add;
+Push 7; Add;
+Swap;
+Return; End;
+    Push 3;
+    Swap;
+    Call;
+Trace;
+"))
