@@ -759,24 +759,13 @@ let parse_bool =
 let parse_unit =
   keyword "Unit" >> pure Unit
 
-let parse_char =
-   satisfy char_islower
-
-let parse_digit = 
-   satisfy char_isdigit
-
-let parse_char_or_int = 
-   parse_char <|> parse_digit 
-
-let string_of_list xs = 
-   string_make_fwork (list_foreach xs)
 let parse_const =
   parse_int <|>
   parse_bool <|>
   parse_unit <|>
-  (let* fst_char = parse_char in
-  let* rst_chars = many(parse_char_or_int) in
-  pure(Sym (string_append (str fst_char) (string_of_list rst_chars))))
+  (let* fst_char =  satisfy char_islower in
+  let* rst_chars = many( satisfy char_islower <|> satisfy char_isdigit) in
+  pure(Sym (string_append (str fst_char) (string_make_fwork (list_foreach rst_chars)))))
 
 
 let rec parse_com () = 
@@ -852,8 +841,7 @@ let rec eval (s : stack) (t : trace) (v : var) (p : prog) : trace =
   | Swap :: p0 ->
     (match s with
     | i :: j :: s0 -> eval ( j :: i :: s0) t v p0
-    | _ :: [] -> eval [] ("Panic" :: t) v []
-    | [] -> eval [] ("Panic" :: t) v []
+    | _ -> eval [] ("Panic" :: t) v []
     )
   | Trace :: p0 ->
     (match s with
@@ -916,16 +904,12 @@ let rec eval (s : stack) (t : trace) (v : var) (p : prog) : trace =
   | Condition (c1, c2) :: p0 -> 
     (match s with
     | Bool a :: s0 -> if a then eval s0 t v (list_append c1 p0) else eval s0 t v (list_append c2 p0)
-    | _ :: s0 -> eval [] ("Panic" :: t) v []
-    | [] -> eval [] ("Panic" :: t) v []
+    | _ -> eval [] ("Panic" :: t) v []
     )
   | Bind :: p0 -> 
     (match s with
     | Sym x :: v0 :: s0 -> eval s0 t (((x), v0) :: v ) p0
-    | _ :: _ :: s0 -> eval [] ("Panic" :: t) v []
-    | _ :: s0 -> eval [] ("Panic" :: t) v []
-    | [] -> eval [] ("Panic" :: t) v []
-    )
+    | _ -> eval [] ("Panic" :: t) v [] )
 
  | Lookup :: p0 ->
       let rec helper cs a s00 = 
@@ -935,29 +919,21 @@ let rec eval (s : stack) (t : trace) (v : var) (p : prog) : trace =
                              else helper tl a s00) in
       (match s with
       | Sym a :: s0 -> helper v a s0 
-      | [] -> eval [] ("Panic" :: t) [] []
-      | _ :: s0 -> eval [] ("Panic" :: t) [] [])
-
+      | _ -> eval [] ("Panic" :: t) v [])
 
   | Fun f :: p0 -> (
       match s with
       | Sym a :: s0 -> eval ((Closure(a, v, f)):: s0) t v p0
-      | _ :: s0 -> eval [] ("Panic" :: t) v []
-      | [] -> eval [] ("Panic" :: t) v []
+      | _ -> eval [] ("Panic" :: t) v []
   )
   | Call :: p0 -> 
     (match s with 
     | Closure (f, i, j) :: a :: s0 -> eval (a :: (Closure (f, v, p0) :: s0)) t ((f, Closure(f, i, j)) :: i) j
-    | _ :: _ :: s0 -> eval [] ("Panic" :: t) v []
-    | _ ::s0 -> eval [] ("Panic" :: t) v []
-    | [] -> eval [] ("Panic" :: t) v []
-    )
+    | _ -> eval [] ("Panic" :: t) v [])
   | Return :: p0 -> 
     (match s with 
     | Closure (f, i, j) :: a :: s0 -> eval (a:: s0) t i j
-    | _ :: _ :: s0 -> eval [] ("Panic" :: t) v []
-    | _ ::s0 -> eval [] ("Panic" :: t) v []
-    | [] -> eval [] ("Panic" :: t) v []
+    | _ -> eval [] ("Panic" :: t) v []
     )
 (* ------------------------------------------------------------ *)
 
