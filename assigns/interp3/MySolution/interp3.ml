@@ -1313,85 +1313,73 @@ let parse_prog (s : string) : expr =
   | Some (m, []) -> scope_expr m
   | _ -> raise SyntaxError
   
-let compile (s : string) : string = 
-  let parsed_p = parse_prog s in 
-  let rec expr_compile (e: expr): coms =
-    match e with
-    | Int i -> [Push (Int i)]
-    | Bool b -> [Push (Bool b)]
-    | Unit -> [Push (Unit)]
-    | Var x -> [Push (Sym x); Lookup]
-    | UOpr (op, e1) ->
-        (match op with 
-        | Not -> expr_compile e1 @ [Not]
-        | Neg -> expr_compile e1 @ [Push (Int (-1)); Mul])
-    | BOpr (op, e1, e2) ->
-        (match op with 
-        | Add -> expr_compile e2 @ expr_compile e1 @ [Add]
-        | Sub -> expr_compile e2 @ expr_compile e1 @ [Sub]
-        | Mul -> expr_compile e2 @ expr_compile e1 @ [Mul]
-        | Div -> expr_compile e2 @ expr_compile e1 @ [Div]
-        | Mod -> expr_compile e2 @ [Push (Sym "expr2"); Bind]
-                  @ expr_compile e1 @ [Push (Sym "e1"); Bind;
-                                        Push (Sym "expr2"); Lookup;
-                                        Push (Sym "expr1"); Lookup;
-                                        Div; Push (Sym "expr2"); Lookup; Mul;
-                                        Push (Sym "expr1"); Lookup; Sub]
-        | And -> expr_compile e1 @ expr_compile e2 @ [And]
-        | Or  -> expr_compile e1 @ expr_compile e2 @ [Or]
-        | Lt  -> expr_compile e2 @ expr_compile e1 @ [Lt]
-        | Gt  -> expr_compile e2 @ expr_compile e1 @ [Gt]
-        | Lte -> expr_compile e2 @ expr_compile e1 @ [Push (Int 1); Swap; Sub; Lt]
-        | Gte -> expr_compile e2 @ expr_compile e1 @ [Push (Int 1); Add; Gt]
-        | Eq  -> expr_compile e1 @ expr_compile e2 @
-                 [Push (Sym "expr2"); Bind; Push (Sym "expr1"); Bind;
-                  Push (Sym "expr1"); Lookup; Push (Sym "expr2"); Lookup;
-                  Lt; Push (Sym "expr1"); Lookup; Push (Sym "expr2"); Lookup;
-                  Gt; Or; Not])
-    | Fun (n, envr, f) ->
-        let cs = [Push (Sym envr); Bind] @ expr_compile f @ [Swap; Ret] in
-        [Push (Sym n); Fun cs]
-    | App (n, envr) -> expr_compile n @ expr_compile envr @ [Swap; Call]
-    | Let (n, v, f) -> expr_compile v @ [Push (Sym n); Bind] @ expr_compile f
-    | Seq (e1, e2) -> expr_compile e1 @ [Pop] @ expr_compile e2
-    | Ifte (condition, ifCondition, elseCondition) ->
-        expr_compile condition @
-        [Ifte (expr_compile ifCondition, expr_compile elseCondition)]
-    | Trace e -> expr_compile e @ [Trace] in
-        
-  let rec compile_helper p = 
-    match p with 
-    | Push c :: rst -> "Push "^
-                        (match c with
-                              | Int i -> str_of_int i
-                              | Bool b ->  string_of_bool b
-                              | Unit -> "Unit"
-                              | Sym s -> s)
-                        ^";"^compile_helper rst
-    | Pop :: rst -> "Pop;"  ^compile_helper rst
-    | Swap :: rst -> "Swap;"  ^compile_helper rst
-    | Trace :: rst -> "Trace;"  ^compile_helper rst
-    | Add :: rst -> "Add;"  ^compile_helper rst
-    | Sub :: rst -> "Sub;"  ^compile_helper rst
-    | Mul :: rst -> "Mul;"  ^compile_helper rst
-    | Div :: rst -> "Div;"  ^compile_helper rst
-    | And :: rst -> "And;"  ^compile_helper rst
-    | Or  :: rst -> "Or;"   ^compile_helper rst
-    | Not :: rst -> "Not;"  ^compile_helper rst
-    | Lt  :: rst -> "Lt;"   ^compile_helper rst
-    | Gt  :: rst -> "Gt;"   ^compile_helper rst
-    | Ifte (c1, c2) :: rst ->  
-        "If "^compile_helper c1^"Else "^compile_helper c2^"End;"^compile_helper rst
-    | Bind :: rst -> "Bind;"  ^compile_helper rst
-    | Lookup :: rst -> "Lookup;"  ^compile_helper rst
-    | Fun func :: rst -> 
-        "Fun "^compile_helper func^"End;" ^compile_helper rst
-    | Call :: rst -> "Call;"  ^compile_helper rst
-    | Ret :: rst -> "Return;" ^compile_helper rst
-    | [] -> ""
-  in (parsed_p |> expr_compile |> compile_helper)
 
-let test = compile("let rec fact x =
-  if x <= 0 then 1
-  else x * fact (x - 1)
-  in trace (fact 10)")
+  let rec expr_compile (e: expr) : string =
+    match e with
+    | Int i -> compile_int i
+    | Bool b -> compile_bool b
+    | Var x -> compile_var x
+    | Unit -> compile_unit ()
+    | UOpr (op, e1) -> compile_unary_op op e1
+    | BOpr (op, e1, e2) -> compile_binary_op op e1 e2
+    | Fun (n, envr, f) -> compile_function n envr f
+    | App (n, envr) -> compile_application n envr
+    | Let (n, v, f) -> compile_let_binding n v f
+    | Seq (e1, e2) -> compile_sequence e1 e2
+    | Ifte (condition, ifCondition, elseCondition) -> compile_if_else condition ifCondition elseCondition
+    | Trace e -> compile_trace e
+  
+  and compile_int i =
+    "Push " ^ string_of_int i ^ "; "
+  
+  and compile_bool b =
+    if b then "Push True; " else "Push False; "
+  
+  and compile_var x =
+    "Push " ^ x ^ "; Lookup; "
+  
+  and compile_unit () =
+    "Push Unit; "
+  
+  and compile_unary_op op e =
+    match op with
+    | Not -> expr_compile e ^ "Not; "
+    | Neg -> expr_compile e ^ "Push -1; Mul; "
+  
+  and compile_binary_op op e1 e2 =
+    match op with
+    | Add -> expr_compile e1 ^ expr_compile e2 ^ "Add; "
+    | Sub -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Sub; "
+    | Mul -> expr_compile e1 ^ expr_compile e2 ^ "Mul; "
+    | Div -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Div; "
+    | Mod -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Div; " ^ expr_compile e2 ^ "Mul; " ^ expr_compile e1 ^ "Sub; "
+    | And -> expr_compile e1 ^ expr_compile e2 ^ "And; "
+    | Or  -> expr_compile e1 ^ expr_compile e2 ^ "Or; "
+    | Lt  -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Lt; "
+    | Gt  -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Gt; "
+    | Lte -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Gt; Not; "
+    | Gte -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Lt; Not; "
+    | Eq  -> expr_compile e1 ^ expr_compile e2 ^ "Swap; Gt; Not; " ^ expr_compile e1 ^ expr_compile e2 ^ "Swap; Lt; Not; And; "
+  
+  and compile_function n envr f =
+    "Push " ^ n ^ "; Fun Push " ^ envr ^ "; Bind; " ^ expr_compile f ^ "Swap; Return; End; "
+  
+  and compile_application n envr =
+    expr_compile n ^ expr_compile envr ^ "Swap; Call; "
+  
+  and compile_let_binding n v f =
+    expr_compile v ^ "Push " ^ n ^ "; Bind; " ^ expr_compile f
+  
+  and compile_sequence e1 e2 =
+    expr_compile e1 ^ "Pop; " ^ expr_compile e2
+  
+  and compile_if_else condition ifCondition elseCondition =
+    expr_compile condition ^ "If " ^ expr_compile ifCondition ^ "Else " ^ expr_compile elseCondition ^ "End; "
+  
+  and compile_trace e =
+    expr_compile e ^ "Trace; "
+  
+  let compile (s : string) : string =
+    let parsed_p = parse_prog s in
+    expr_compile parsed_p
+  
