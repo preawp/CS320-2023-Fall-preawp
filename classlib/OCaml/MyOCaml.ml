@@ -710,3 +710,10 @@ let keyword(s: string) =
 (* ****** ****** *)
 
 (* end of [CS320-2023-Fall-classlib-MyOCaml.ml] *)
+
+let rec fstream (x : int): int stream = fun () ->
+  StrCons (x, fstream(x + 1))
+let mystream =
+  stream_map (fstream 0)
+    (fun x -> if x mod 2 = 0 then 0 else x * x)
+
