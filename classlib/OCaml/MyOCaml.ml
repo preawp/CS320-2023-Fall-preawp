@@ -4,6 +4,7 @@
  is a class library
  built for CS320, Fall, 2023
 *)
+
 (* ****** ****** *)
 exception False;;
 (* ****** ****** *)
@@ -711,9 +712,28 @@ let keyword(s: string) =
 
 (* end of [CS320-2023-Fall-classlib-MyOCaml.ml] *)
 
-let rec fstream (x : int): int stream = fun () ->
-  StrCons (x, fstream(x + 1))
-let mystream =
-  stream_map (fstream 0)
-    (fun x -> if x mod 2 = 0 then 0 else x * x)
+let
+mystream =
+let
+rec
+fstream(n: int): int stream = fun() ->
+StrCons(n, stream_map(fstream(n+1))(fun(x) -> x+x+1)) in
+fstream(0)
 
+
+(* Define a simple stream type *)
+type 'a stream = Cons of 'a * (unit -> 'a stream)
+
+(* Function to generate a stream of numbers based on a pattern *)
+
+
+(* Generate a stream and print elements from it *)let rec stream_take n st =
+  if n = 0 then []
+  else
+    match st () with
+    | StrNil -> []
+    | StrCons (x, xs) -> x :: stream_take (n - 1) xs
+
+let print_int_list list = print_string (String.concat " " (List.map string_of_int list))
+
+let () = print_int_list @@ stream_take 5 @@ mystream

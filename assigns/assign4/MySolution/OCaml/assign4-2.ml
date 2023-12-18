@@ -13,7 +13,16 @@ if i1+j1 < i2+j2.
 let theNatPairs: (int*int) stream = fn () => ...
 //
 *)
-let theNatPairs : (int * int) stream =
+
+let theNatPairs: (int * int) stream = 
+  let rec helper (i,j) = 
+    if j = 0 then
+      StrCons((i,j), fun () -> helper (0, i+1))
+    else 
+      StrCons((i,j), fun () -> helper ())
+    in fun () -> helper (0,0)
+
+(* let theNatPairs : (int * int) stream =
   let rec helper (i, j) =
     if j = 0 then
       StrCons ((i, j), fun () -> helper (0, i + 1))
@@ -21,4 +30,4 @@ let theNatPairs : (int * int) stream =
       StrCons ((i, j), fun () -> helper (i + 1, j - 1))
   in
   fun () -> helper (0, 0)
-
+*)
